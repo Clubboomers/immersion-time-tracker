@@ -1,0 +1,29 @@
+{
+  "name": "Immersion Time Tracker",
+  "description": "Track how much time you spend watching videos on sites like YouTube",
+  "version": "0.0.1",
+  "manifest_version": 3,
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "activeTab",
+    "declarativeContent"
+  ],
+  "minimum_chrome_version": "93",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [{
+    "matches": ["*://*.youtube.com/*"],
+    "js": ["video.js"],
+    "run_at": "document_end"
+  }],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "options_page": "options.html",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Immersion Time Tracker"
+  }
+}

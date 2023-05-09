@@ -1,0 +1,15 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    width: 400px;
+    height: 400px;
+}
+
+h1 {
+    text-align: center;
+    color: red;
+}
