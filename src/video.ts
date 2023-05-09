@@ -1,6 +1,7 @@
 let videoElement: HTMLVideoElement | null;
 let thisUrl: string = window.location.href;
 let videoIsPlaying: boolean | undefined;
+let videoHasListeners: boolean = false;
 onUrlChange();
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -17,8 +18,9 @@ function onUrlChange(): void {
     console.log("This is a video link!");
     videoElement = document.querySelector("video");
     if (videoElement) {
-        addEventListeners(videoElement);
-        videoElement.play();
+      addEventListeners(videoElement);
+      console.log("Added event listeners to video element");
+      videoElement.play();
     }
   }
 }
@@ -28,37 +30,54 @@ function urlIsVideoLink(): boolean {
 }
 
 function addEventListeners(videoElement: HTMLVideoElement): void {
-  videoElement.addEventListener("pause", () => {
-    console.log("The video has been paused");
-    videoIsPlaying = false;
-    sendUpdateToBackground();
-  });
-  videoElement.addEventListener("play", () => {
-    console.log("The video has been resumed");
-    videoIsPlaying = true;
-    sendUpdateToBackground();
-  });
+  if (!videoHasListeners) {
+    videoElement.addEventListener("pause", () => {
+      console.log("The video has been paused");
+      videoIsPlaying = false;
+      sendUpdateToBackground();
+    });
+    videoElement.addEventListener("play", () => {
+      console.log("The video has been resumed");
+      videoIsPlaying = true;
+      sendUpdateToBackground();
+    });
+    videoHasListeners = true;
+  }
 }
 
 function isPlaying(): boolean {
-    if (videoIsPlaying === undefined) {
-        return false;
-    } else {
-        return videoIsPlaying;
-    }
+  if (videoIsPlaying === undefined) {
+    return false;
+  } else {
+    return videoIsPlaying;
+  }
 }
 
+// test only
+/*function sendUpdateToBackground(): void {
+  chrome.runtime.sendMessage({
+    message: "update",
+    title: JSON.stringify(getVideoTitle()),
+    url: JSON.stringify(getUrl()),
+    isPlaying: JSON.stringify(isPlaying()),
+  });
+  console.log("sent message to background");
+}*/
+
 function sendUpdateToBackground(): void {
-    chrome.runtime.sendMessage({
-        message: "update",
-        videoInformation: getVideoInformation(),
-        isPlaying: isPlaying(),
-    });
+  chrome.runtime.sendMessage({
+    message: "update",
+    title: JSON.stringify(getVideoTitle()),
+    url: JSON.stringify(getUrl()),
+    isPlaying: JSON.stringify(isPlaying()),
+  });
 }
 
 function getVideoTitle(): string | null {
   let title: string | null = null;
-  const titleElement = document.querySelector("#container > h1 > yt-formatted-string");
+  const titleElement = document.querySelector(
+    "#container > h1 > yt-formatted-string"
+  );
   if (titleElement) {
     title = titleElement.textContent;
   }

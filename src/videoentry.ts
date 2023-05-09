@@ -38,15 +38,9 @@ export class VideoEntry {
     this.timeEntries = timeEntries;
   }
 
-  public addTimeEntryDates(startTime: Date, endTime: Date): void {
-    const timeEntry = new TimeEntry(startTime, endTime);
-    this.timeEntries.push(timeEntry);
-    this.durationWatched += timeEntry.getDuration();
-  }
-
   public addTimeEntry(timeEntry: TimeEntry): void {
+    if (!timeEntry.endTimeSet()) return;
     this.timeEntries.push(timeEntry);
-    this.durationWatched += timeEntry.getDuration();
   }
 
   private updateDurationWatched(): void {
