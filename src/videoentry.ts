@@ -6,11 +6,11 @@ export class VideoEntry {
   private timeEntries: TimeEntry[];
   private durationWatched: number;
 
-  // make videoName optional
-  constructor(url: string, videoName: string | null) {
+  // make videoName optional, and list of timeEntries optional
+  constructor(url: string, videoName: string | null, timeEntries?: TimeEntry[]) {
     this.url = url;
     this.videoName = videoName;
-    this.timeEntries = [];
+    this.timeEntries = timeEntries || [];
     this.durationWatched = 0;
   }
 
@@ -20,6 +20,16 @@ export class VideoEntry {
 
   public setUrl(url: string): void {
     this.url = url;
+  }
+
+  /**
+   * Stops the last time entry if it is still running
+   */
+  public stop(): void {
+    const lastTimeEntry = this.getLastTimeEntry();
+    if (!lastTimeEntry) return;
+    lastTimeEntry.setEndTime(new Date());
+    this.updateDurationWatched();
   }
 
   public getVideoName(): string | null {
@@ -39,8 +49,8 @@ export class VideoEntry {
   }
 
   public addTimeEntry(timeEntry: TimeEntry): void {
-    if (!timeEntry.endTimeSet()) return;
     this.timeEntries.push(timeEntry);
+    this.updateDurationWatched();
   }
 
   private updateDurationWatched(): void {
@@ -54,10 +64,17 @@ export class VideoEntry {
     return this.durationWatched;
   }
 
-  public getLastTimeEntry(): TimeEntry | null {
+  private getLastTimeEntry(): TimeEntry | null {
     if (this.timeEntries.length > 0) {
       return this.timeEntries[this.timeEntries.length - 1];
     }
     return null;
+  }
+
+  public setLastTimeEntryEndTime(endTime: Date): void {
+    if (this.timeEntries.length > 0) {
+      this.getLastTimeEntry()!.setEndTime(endTime);
+    }
+    this.updateDurationWatched();
   }
 }

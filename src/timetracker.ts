@@ -31,7 +31,7 @@ export class TimeTracker {
     return TimeTracker.instance;
   }
 
-  private getLastTimeEntry(): TimeEntry | null {
+  public getLastTimeEntry(): TimeEntry | null {
     if (this.timeEntries.length === 0) {
       return null;
     }
@@ -44,11 +44,11 @@ export class TimeTracker {
    */
   public startTimer(): void {
     const lastTimeEntry = this.getLastTimeEntry();
-    if (lastTimeEntry && lastTimeEntry.getEndTime()) {
+    if (lastTimeEntry && !lastTimeEntry.getEndTime()) {
       // last time entry is still running
       this.stopTimer();
       return;
-    }
+    } 
     this.timeEntries.push(new TimeEntry(new Date()));
   }
 
@@ -56,6 +56,7 @@ export class TimeTracker {
     const lastTimeEntry = this.getLastTimeEntry();
     if (!lastTimeEntry) return;
     lastTimeEntry.setEndTime(new Date());
+    this.updateTotalTimeWatched();
   }
 
   public getName(): string {
@@ -104,12 +105,22 @@ export class TimeTracker {
     if (!videoEntry) {
       return;
     }
-    videoEntry.getLastTimeEntry()?.setEndTime(endTime);
+    //videoEntry.getLastTimeEntry()?.setEndTime(endTime);
+    videoEntry.setLastTimeEntryEndTime(endTime);
   }
 
   public getVideoEntryByURL(url: string): VideoEntry | null {
     for (const videoEntry of this.videoEntries) {
       if (videoEntry.getUrl() === url) {
+        return videoEntry;
+      }
+    }
+    return null;
+  }
+
+  public getVideoEntryByKey(key: string):VideoEntry | null {
+    for (const videoEntry of this.videoEntries) {
+      if (videoEntry.getUrl().includes(key)) {
         return videoEntry;
       }
     }
@@ -126,6 +137,27 @@ export class TimeTracker {
     this.lastVideoEntry = videoEntry;
   }
 
+  /**
+   * Adds a new video entry to the time tracker
+   * If the last time entry is still running, it will be stopped.
+   * @param url url of the video
+   * @param title title of the video
+   * @param date time when the timer was started
+   */
+  public addVideoEntryByUrl(
+    url: string,
+    title: string | null,
+    date: Date
+  ): void {
+    if (this.videoEntryWithUrlExists(url)) {
+      const videoEntry = this.getVideoEntryByUrl(url)!;
+      videoEntry.addTimeEntry(new TimeEntry(date));
+      return;
+    }
+    this.videoEntries.push(new VideoEntry(url, title, [new TimeEntry(date)]));
+    this.lastVideoEntry = this.videoEntries[this.videoEntries.length - 1];
+  }
+
   private videoEntryWithUrlExists(url: string): boolean {
     for (const videoEntry of this.videoEntries) {
       if (videoEntry.getUrl() === url) {
@@ -137,8 +169,10 @@ export class TimeTracker {
 
   public updateTotalTimeWatched(): void {
     this.totalTimeWatched = 0;
-    this.videoEntries.forEach((videoEntry) => {
-      this.totalTimeWatched += videoEntry.getDurationWatched();
+    this.timeEntries.forEach((timeEntry) => {
+      if (timeEntry.getEndTime()) {
+        this.totalTimeWatched += timeEntry.getDuration();
+      }
     });
   }
 
@@ -159,7 +193,7 @@ export class TimeTracker {
     );
     timeTracker.setVideoEntries(parsedJSON.videoEntries);
     timeTracker.setLastVideoEntry(parsedJSON.lastVideoEntry);
-    timeTracker.setTotalTimeWatched(parsedJSON.totalTimeWatched);
+    timeTracker.updateTotalTimeWatched();
     return timeTracker;
   }
 

@@ -1,7 +1,7 @@
 {
   "name": "Immersion Time Tracker",
   "description": "Track how much time you spend watching videos on sites like YouTube",
-  "version": "0.0.3",
+  "version": "0.0.8",
   "manifest_version": 3,
   "permissions": [
     "tabs",
