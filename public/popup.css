@@ -102,7 +102,7 @@ img {
   float: left;
   white-space: nowrap; /* prevent text from wrapping */
   transform: translateX(0%);
-  animation: my-animation 20s linear infinite;
+  animation: text-scroll 20s linear infinite;
 }
 
 .video-title::before {
@@ -122,7 +122,7 @@ img {
   }
 
 /* for Chrome */
-@keyframes my-animation {
+@keyframes text-scroll {
   from {
     -webkit-transform: translateX(0%);
   }
@@ -141,15 +141,6 @@ li {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-}
-
-@keyframes scroll-left {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
 }
 
 li:nth-child(even) {

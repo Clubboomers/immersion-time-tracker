@@ -6,14 +6,16 @@ import {
 import { TimeTracker } from "./timetracker";
 
 let timeTracker = TimeTracker.getInstance(
-  "YouTube Time Tracker",
-  "Tracks watch time on YouTube"
+  "Immersion Time Tracker",
+  "Tracks time immersing in a language"
 );
 
 let activeTabs: { id: number; url: string }[] = []; // the tabs that are currently open
 let playingVideos: { title: string | null; url: string }[] = [];
 
-// override push method to start timer when first video is played
+/**
+ * override push method to start timer when first video is played
+ */
 playingVideos.push = function (item) {
   if (this.length === 0) {
     startTimer();

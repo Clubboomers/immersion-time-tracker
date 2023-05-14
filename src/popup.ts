@@ -1,5 +1,3 @@
-import { request } from "http";
-import { TimeTracker } from "./timetracker";
 let timer: number;
 let timerActive: boolean = false;
 let recentActivity: {
@@ -8,14 +6,6 @@ let recentActivity: {
   url: string;
   title: string;
 }[] = [];
-/*addNewActivity(
-    "Build a Curvaceous Homepage // Wavy Background Tutorial with SVG & CSS",
-    "https://www.youtube.com/watch?v=lPJVi797Uy0"
-  );
-  addNewActivity(
-    "Card Captor Sakura - Clear Card Arc - Opening 2 - Rocket Beat",
-    "https://www.netflix.com/watch/81026198?trackId=13752289&tctx=0%2C0%2Cf2b4a3b0-0e5a-4b1a-8b1a-4b0b8b0b4b0b-0%2C%2C"
-  );*/
 init();
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

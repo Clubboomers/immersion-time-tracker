@@ -1,5 +1,3 @@
-import { get } from "http";
-import { isYouTube } from "./background";
 let videoElement: HTMLVideoElement | null;
 let thisUrl: string = window.location.href;
 let videoIsPlaying: boolean | undefined;
@@ -154,21 +152,33 @@ async function sendUpdateToBackground(): Promise<void> {
 async function getVideoTitle(): Promise<string | null> {
   return new Promise((resolve, reject) => {
     //const titleElement = document.querySelector("#container > h1 > yt-formatted-string");
-    const titleElement = document.querySelector("#container > h1 > yt-formatted-string");
-    if (titleElement) {
+    let titleElement = document.querySelector("#container > h1 > yt-formatted-string");
+    if (titleElement && titleElement.textContent) {
       resolve(titleElement.textContent);
       return;
+    } else {
+      titleElement = document.querySelector("yt-formatted-string");
+      if (titleElement && titleElement.getAttribute('title')) {
+        resolve(titleElement.getAttribute('title'));
+        return;
+      }
     }
 
     const observer = new MutationObserver((mutationsList) => {
       for (let mutation of mutationsList) {
         if (mutation.type === "childList") {
           const titleElement = document.querySelector("#container > h1 > yt-formatted-string");
-          if (titleElement) {
+          const titleElement2 = document.querySelector("yt-formatted-string");
+          if (titleElement && titleElement.textContent) {
             observer.disconnect();
             resolve(titleElement.textContent);
             break;
+          } else if (titleElement2 && titleElement2.getAttribute('title')) {
+            observer.disconnect();
+            resolve(titleElement2.getAttribute('title'));
+            break;
           }
+          resolve(null);
         }
       }
     });
