@@ -1,7 +1,9 @@
+import "reflect-metadata";
+import {
+  instanceToPlain,
+  plainToInstance,
+} from "class-transformer";
 import { TimeTracker } from "./timetracker";
-import { VideoInformation } from "./video";
-import { VideoEntry } from "./videoentry";
-import { TimeEntry } from "./timeentry";
 
 let timeTracker = TimeTracker.getInstance(
   "YouTube Time Tracker",
@@ -10,19 +12,34 @@ let timeTracker = TimeTracker.getInstance(
 
 let activeTabs: { id: number; url: string }[] = []; // the tabs that are currently open
 let playingVideos: { title: string | null; url: string }[] = [];
+
+// override push method to start timer when first video is played
+playingVideos.push = function (item) {
+  if (this.length === 0) {
+    startTimer();
+    chrome.runtime.sendMessage({
+      message: "playing_state",
+      playing_state: true,
+      url: item.url,
+      string: item.title,
+    });
+  }
+  return Array.prototype.push.call(this, item);
+};
+
 //let url: string | undefined; // the url of the tab that is currently being viewed
 
 chrome.runtime.onInstalled.addListener(function () {
   saveExists(function (exists) {
     if (!exists) {
-      createSave();
+      saveTimeTracker(timeTracker);
     } else {
       try {
-        loadTimeTracker();
+        timeTracker = loadTimeTrackerFromStorage() || timeTracker;
       } catch (error) {
         console.log(error);
         deleteSave();
-        createSave();
+        saveTimeTracker(timeTracker);
       }
     }
   });
@@ -48,31 +65,6 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   removeFromActiveTabs(tabId);
 });
 
-function handleTabClosed() {
-  chrome.tabs.query({}, function (tabs) {
-    // check if any of the playingVideos have been closed
-    const urls = getActiveTabsUrls();
-    for (let i = 0; i < playingVideos.length; i++) {
-      if (!urls.includes(playingVideos[i].url)) {
-        // none of the active tabs have the url of the video, so it must have been closed
-        timeTracker.getVideoEntryByURL(playingVideos[i].url)?.stop();
-        playingVideos.splice(i, 1);
-      }
-    }
-  });
-}
-
-function updateActiveTabs(): void {
-  activeTabs = [];
-  chrome.tabs.query({}, function (tabs) {
-    tabs.forEach((tab) => {
-      if (tab.url && isYouTube(tab.url)) {
-        addToActiveTabs(tab.id!, tab.url);
-      }
-    });
-  });
-}
-
 /**
  * Adds tab to activeTabs and sends message to content script to start tracking time
  * @param tabId
@@ -89,8 +81,12 @@ function addToActiveTabs(
 
     if (playingVideos.some((video) => url.includes(video.url))) {
       // video is already playing
-      const playingVideoKey = playingVideos.find((video) => url.includes(video.url))?.url;
-      playingVideoKey ? timeTracker.getVideoEntryByKey(playingVideoKey)?.stop() : null;  // stop the video that was playing
+      const playingVideoKey = playingVideos.find((video) =>
+        url.includes(video.url)
+      )?.url;
+      playingVideoKey
+        ? timeTracker.getVideoEntryByKey(playingVideoKey)?.stop()
+        : null; // stop the video that was playing
       return;
     }
 
@@ -183,8 +179,8 @@ setInterval(() => {
   updateEndTimePlayingVideos();
   console.log(activeTabs);
   console.log(playingVideos);
-  chrome.storage.local.set({ timeTracker: TimeTracker.toJSON(timeTracker) });
-  console.log(JSON.parse(TimeTracker.toJSON(timeTracker)));
+  saveTimeTracker(timeTracker);
+  console.log(timeTracker);
 }, 10000);
 
 function saveExists(callback: (exists: boolean) => void): void {
@@ -198,14 +194,14 @@ function saveExists(callback: (exists: boolean) => void): void {
 }
 
 function createSave(): void {
-  chrome.storage.local.set({ timeTracker: TimeTracker.toJSON(timeTracker) });
+  chrome.storage.local.set({ timeTracker: TimeTracker.toJson(timeTracker) });
   console.log("created save");
 }
 
 function loadTimeTracker(): void {
   try {
     chrome.storage.local.get(["timeTracker"], function (result) {
-      timeTracker = TimeTracker.fromJSON(result.timeTracker);
+      timeTracker = TimeTracker.fromJson(result.timeTracker);
       console.log("loaded save");
     });
   } catch (error) {
@@ -230,6 +226,40 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       handleUpdate(title, url, isPlaying);
     }
   }
+
+  if (request.message === "get_popup_info") {
+    const recentActivity = timeTracker.getRecentActivity();
+    let now = new Date();
+    let watchtimeToday = timeTracker.getWatchTimeMillis(now.getHours() + now.getMinutes() / 60); // hours since midnight
+    const playingState = playingVideos.length > 0;
+    sendResponse({
+      message: "popup_info",
+      recentActivity: recentActivity,
+      watchtimeToday: watchtimeToday,
+      playingState: playingState,
+    });
+  }
+
+  if (request.message === "get_recent_activity") {
+    const recentActivity = timeTracker.getRecentActivity();
+    sendResponse({
+      message: "recent_activity",
+      recentActivity: recentActivity,
+    });
+  }
+
+  if (request.message === "get_watchtime_today") {
+    const watchtimeToday = timeTracker.getWatchTimeMillis(24);
+    sendResponse({
+      message: "watchtime_today",
+      watchtimeToday: watchtimeToday,
+    });
+  }
+
+  if (request.message === "get_playing_state") {
+    const playingState = playingVideos.length > 0;
+    sendResponse({ message: "playing_state", playingState: playingState });
+  }
 });
 
 function handleUpdate(
@@ -244,7 +274,6 @@ function handleUpdate(
     case true:
       console.log("video is playing");
       timeTracker.addVideoEntryByUrl(url, title, new Date());
-      startTimer();
       playingVideos.push(videoInformation);
       console.log("playing videos: " + playingVideos.length);
       break;
@@ -297,4 +326,21 @@ function stopTimer(): void {
     console.log("Stopping timer");
     timeTracker.stopTimer();
   }
+}
+
+export function saveTimeTracker(timeTracker: TimeTracker): void {
+  chrome.storage.local.set({
+    timeTracker: JSON.stringify(instanceToPlain(timeTracker)),
+  });
+}
+
+export function loadTimeTrackerFromStorage(): TimeTracker | null {
+  chrome.storage.local.get(["timeTracker"], function (result) {
+    const timeTracker = plainToInstance(
+      TimeTracker,
+      JSON.parse(result.timeTracker)
+    );
+    return timeTracker;
+  });
+  return null;
 }

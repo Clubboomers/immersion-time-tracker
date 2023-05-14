@@ -1,5 +1,16 @@
+import "reflect-metadata";
+import {
+  Expose,
+  Type,
+  instanceToPlain,
+  plainToInstance,
+} from "class-transformer";
+
 export class TimeEntry {
+  @Expose({ name: "startTime" })
+  @Type(() => Date)
   private startTime: Date;
+  @Expose({ name: "endTime" })
   private endTime: Date | null = null;
 
   constructor(startTime: Date, endTime?: Date) {

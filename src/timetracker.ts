@@ -1,18 +1,32 @@
+import "reflect-metadata";
+import {
+  Expose,
+  Type,
+  instanceToPlain,
+  plainToInstance,
+} from "class-transformer";
 import { VideoEntry } from "./videoentry";
 import { TimeEntry } from "./timeentry";
 
 export class TimeTracker {
   private static instance: TimeTracker; // singleton instance
-
+  @Expose({ name: "name" })
   private name: string;
+  @Expose({ name: "description" })
   private description: string;
+  @Type(() => VideoEntry)
   private videoEntries: VideoEntry[]; // more detailed information videos watched
   /**
    * as opposed to videoEntries, timeEntries only tracks the time you're watching one or more videos,
    * so can't have multiple entries during the same period of time
    */
+  @Expose({ name: "timeEntries" })
+  @Type(() => TimeEntry)
   private timeEntries: TimeEntry[];
+  @Expose({ name: "lastVideoEntry" })
+  @Type(() => VideoEntry)
   private lastVideoEntry: VideoEntry | null;
+  @Expose({ name: "totalTimeWatched" })
   private totalTimeWatched: number;
 
   constructor(name: string, description: string) {
@@ -48,7 +62,7 @@ export class TimeTracker {
       // last time entry is still running
       this.stopTimer();
       return;
-    } 
+    }
     this.timeEntries.push(new TimeEntry(new Date()));
   }
 
@@ -100,6 +114,14 @@ export class TimeTracker {
     this.totalTimeWatched = totalTimeWatched;
   }
 
+  public setTimeEntries(timeEntries: TimeEntry[]): void {
+    this.timeEntries = timeEntries;
+  }
+
+  public getTimeEntries(): TimeEntry[] {
+    return this.timeEntries;
+  }
+
   public addTimeEndToVideoEntry(url: string, endTime: Date): void {
     const videoEntry = this.getVideoEntryByURL(url);
     if (!videoEntry) {
@@ -118,7 +140,7 @@ export class TimeTracker {
     return null;
   }
 
-  public getVideoEntryByKey(key: string):VideoEntry | null {
+  public getVideoEntryByKey(key: string): VideoEntry | null {
     for (const videoEntry of this.videoEntries) {
       if (videoEntry.getUrl().includes(key)) {
         return videoEntry;
@@ -185,19 +207,63 @@ export class TimeTracker {
     return null;
   }
 
-  public static fromJSON(json: string): TimeTracker {
-    const parsedJSON = JSON.parse(json);
-    const timeTracker = new TimeTracker(
-      parsedJSON.name,
-      parsedJSON.description
-    );
-    timeTracker.setVideoEntries(parsedJSON.videoEntries);
-    timeTracker.setLastVideoEntry(parsedJSON.lastVideoEntry);
-    timeTracker.updateTotalTimeWatched();
+  /**
+   * Returns the time entries of the last hour
+   */
+  public getRecentActivity(): { url: string; title: string }[] {
+    if (this.videoEntries.length === 0) return [];
+    const recentActivity: { url: string; title: string }[] = [];
+    for (const videoEntry of this.videoEntries) {
+      if (videoEntry.wasRecent()) {
+        const url = videoEntry.getUrl();
+        const title = videoEntry.getVideoName() || "";
+        recentActivity.push({ url, title });
+      }
+    }
+    return recentActivity;
+  }
+
+  /**
+   *
+   * @param range in hours
+   * @returns the watch time in the last range hours in milliseconds
+   */
+  public getWatchTimeMillis(range: number): number {
+    let watchTime = 0;
+    const videoEntriesInRange = this.getVideoEntriesInRange(range);
+    for (const videoEntry of videoEntriesInRange) {
+      watchTime += videoEntry.getWatchtimeMillis(range);
+    }
+    return Math.floor(watchTime);
+  }
+
+  private getVideoEntriesInRange(range: number): VideoEntry[] {
+    const videoEntriesInRange: VideoEntry[] = [];
+    for (const videoEntry of this.videoEntries) {
+      const lastTimeEntry = videoEntry.getLastTimeEntry();
+      if (!lastTimeEntry) continue;
+      if (
+        lastTimeEntry.getEndTime()?.getTime()! >=
+          new Date().getTime() - range * 3600000 ||
+        lastTimeEntry.getStartTime().getTime() >=
+          new Date().getTime() - range * 3600000
+      ) {
+        // video was watched in the last range hours
+        videoEntriesInRange.push(videoEntry);
+      }
+    }
+    return videoEntriesInRange;
+  }
+
+  public static fromJson(json: string): TimeTracker {
+    const timeTracker: TimeTracker = plainToInstance(
+      TimeTracker,
+      JSON.parse(json)
+    )[0];
     return timeTracker;
   }
 
-  public static toJSON(timeTracker: TimeTracker): string {
-    return JSON.stringify(timeTracker);
+  public static toJson(timeTracker: TimeTracker): string {
+    return JSON.stringify(instanceToPlain(timeTracker));
   }
 }

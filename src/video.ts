@@ -96,6 +96,7 @@ function setVideoOnPlayPause(videoElement: HTMLVideoElement): void {
 }
 
 function reportPlayToBackground(): void {
+  if (videoIsPlaying) return; // prevent double counting
   videoIsPlaying = true;
   hasPlayed = true;
   sendUpdateToBackground();
@@ -137,8 +138,14 @@ async function sendUpdateToBackground(): Promise<void> {
   console.log("sending update to background");
   chrome.runtime.sendMessage({
     message: "update",
-    title: await getVideoTitle(),
-    url: getUrl().substring(getUrl().indexOf("=") + 1), // remove "https://www.youtube.com/watch?v=" so video key is all that remains
+    title: await getVideoTitle().then((title) => {
+      if (title) {
+        return title;
+      } else {
+        return "";
+      }
+    }),
+    url: getUrl(), 
     isPlaying: JSON.stringify(isPlaying()),
   });
   console.log("sent message to background");
@@ -146,44 +153,35 @@ async function sendUpdateToBackground(): Promise<void> {
 
 async function getVideoTitle(): Promise<string | null> {
   return new Promise((resolve, reject) => {
-    let timeWaited = 0;
-    const maxTimeToWait = 3000; // reject after 3 seconds of no title
+    //const titleElement = document.querySelector("#container > h1 > yt-formatted-string");
+    const titleElement = document.querySelector("#container > h1 > yt-formatted-string");
+    if (titleElement) {
+      resolve(titleElement.textContent);
+      return;
+    }
 
-    const intervalId = setInterval(() => {
-      // wait for title to load
-      const titleElement = document.querySelector(
-        "#container > h1 > yt-formatted-string"
-      );
-      if (!titleElement && timeWaited > maxTimeToWait) {
-        clearInterval(intervalId);
-        resolve(null);
-      } else if (titleElement) {
-        clearInterval(intervalId);
-        resolve(titleElement.textContent);
+    const observer = new MutationObserver((mutationsList) => {
+      for (let mutation of mutationsList) {
+        if (mutation.type === "childList") {
+          const titleElement = document.querySelector("#container > h1 > yt-formatted-string");
+          if (titleElement) {
+            observer.disconnect();
+            resolve(titleElement.textContent);
+            break;
+          }
+        }
       }
-      timeWaited += 100;
-    }, 100);
+    });
+    observer.observe(document, { childList: true, subtree: true });
+
+    setTimeout(() => {
+      observer.disconnect();
+      console.log("Could not find video title: timed out");
+      resolve(null);
+    }, 5000);
   });
 }
 
 function getUrl(): string {
   return thisUrl;
-}
-
-export class VideoInformation {
-  private title: string | null;
-  private url: string;
-
-  constructor(title: string | null, url: string) {
-    this.title = title;
-    this.url = url;
-  }
-
-  public getTitle(): string | null {
-    return this.title;
-  }
-
-  public getUrl(): string {
-    return this.url;
-  }
 }

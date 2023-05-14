@@ -1,15 +1,17 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "module": "ES6",
-        "moduleResolution": "node",
-        "target": "ES6",
-        "esModuleInterop": true,
-        "sourceMap": true,
-        "rootDir": "src",
-        "outDir": "dist",
-        "noEmitOnError": true,
-        "typeRoots": ["node_modules/@types"]
-    },
-    "include": ["src/**/*"]
+  "compilerOptions": {
+    "strict": true,
+    "module": "ES6",
+    "moduleResolution": "node",
+    "target": "ES6",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmitOnError": true,
+    "typeRoots": ["node_modules/@types"],
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  },
+  "include": ["src/**/*"]
 }

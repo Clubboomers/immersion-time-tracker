@@ -1,9 +1,21 @@
+import "reflect-metadata";
+import {
+  Expose,
+  Type,
+  instanceToPlain,
+  plainToInstance,
+} from "class-transformer";
 import { TimeEntry } from "./timeentry";
 
 export class VideoEntry {
+  @Expose({ name: "videoName" })
   private videoName: string | null;
+  @Expose({ name: "url" })
   private url: string;
+  @Expose({ name: "timeEntries" })
+  @Type(() => TimeEntry)
   private timeEntries: TimeEntry[];
+  @Expose({ name: "durationWatched" })
   private durationWatched: number;
 
   // make videoName optional, and list of timeEntries optional
@@ -64,16 +76,51 @@ export class VideoEntry {
     return this.durationWatched;
   }
 
-  private getLastTimeEntry(): TimeEntry | null {
+  public wasRecent(): boolean {
+    console.log("wasRecent() called");
+    // get the last time entry that has an end time
+    const lastTimeEntry = this.getLastTimeEntry();
+    if (!lastTimeEntry) return false;
+    let timeStamp = lastTimeEntry.getEndTime() || lastTimeEntry.getStartTime(); // if there is no end time, get the start time
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000); // 60 minutes * 60 seconds * 1000 milliseconds
+    return timeStamp > oneHourAgo;
+  }
+
+  public getLastTimeEntry(): TimeEntry | null {
     if (this.timeEntries.length > 0) {
       return this.timeEntries[this.timeEntries.length - 1];
     }
     return null;
   }
 
+/**
+ * 
+ * @param range The range in hours
+ * @returns The number of milliseconds watched within the range
+ */
+  public getWatchtimeMillis(range: number): number {
+    const now = new Date();
+    const rangeInMilliseconds = range * 60 * 60 * 1000; // 60 minutes * 60 seconds * 1000 milliseconds
+    const rangeStart = new Date(now.getTime() - rangeInMilliseconds);
+    let durationWatched = 0;
+    this.timeEntries.forEach((timeEntry) => {
+      const startTime = timeEntry.getStartTime();
+      const endTime = timeEntry.getEndTime();
+      if (startTime && endTime) {
+        if (startTime > rangeStart) {
+          durationWatched += timeEntry.getDuration();
+        }
+      }
+    });
+    return durationWatched;
+  }
+
   public setLastTimeEntryEndTime(endTime: Date): void {
     if (this.timeEntries.length > 0) {
-      this.getLastTimeEntry()!.setEndTime(endTime);
+      const lastTimeEntry = this.getLastTimeEntry();
+      if (!lastTimeEntry) throw new Error("Cannot set value because lastTimeEntry is null");
+      lastTimeEntry.setEndTime(endTime);
     }
     this.updateDurationWatched();
   }
