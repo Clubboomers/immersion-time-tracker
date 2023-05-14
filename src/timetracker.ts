@@ -254,16 +254,4 @@ export class TimeTracker {
     }
     return videoEntriesInRange;
   }
-
-  public static fromJson(json: string): TimeTracker {
-    const timeTracker: TimeTracker = plainToInstance(
-      TimeTracker,
-      JSON.parse(json)
-    )[0];
-    return timeTracker;
-  }
-
-  public static toJson(timeTracker: TimeTracker): string {
-    return JSON.stringify(instanceToPlain(timeTracker));
-  }
 }

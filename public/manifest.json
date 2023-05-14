@@ -16,11 +16,13 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "content_scripts": [{
-    "matches": ["*://*.youtube.com/*"],
-    "js": ["video.js"],
-    "run_at": "document_end"
-  }],
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["video.js"],
+      "run_at": "document_end"
+    }
+  ],
   "host_permissions": ["*://*.youtube.com/*"],
   "options_page": "options.html",
   "action": {

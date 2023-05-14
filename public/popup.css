@@ -61,18 +61,18 @@ h2 {
 }
 
 ul {
-    background-color: #232220;
+  background-color: #232220;
   height: 200px;
   width: 100%;
   overflow: auto;
 }
 
 ul:empty {
-    background-image: url("./lonely.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 200px;
+  background-image: url("./lonely.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  height: 200px;
 }
 
 img {
@@ -113,13 +113,16 @@ img {
 }
 
 .disable-animation {
-    animation: none;
+  animation: none;
 }
 
 .video-title.disable-animation::before {
-    animation: none;
-    content: attr(data-text, ""); /* set the content property to the default value */
-  }
+  animation: none;
+  content: attr(
+    data-text,
+    ""
+  ); /* set the content property to the default value */
+}
 
 /* for Chrome */
 @keyframes text-scroll {

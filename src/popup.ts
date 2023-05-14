@@ -79,7 +79,7 @@ async function requestPopupInfo(): Promise<{
   });
 }
 
-async function requestRecentActivity(): Promise<
+/*async function requestRecentActivity(): Promise<
   { url: string; title: string }[] | null
 > {
   return new Promise((resolve, reject) => {
@@ -135,13 +135,13 @@ async function requestWatchtimeToday(): Promise<number | null> {
       resolve(null);
     }, 5000);
   });
-}
+}*/
 
 /**
  *
  * @returns true if the video is playing, false if it is paused, null if the request failed
  */
-async function requestPlayingState(): Promise<boolean | null> {
+/*async function requestPlayingState(): Promise<boolean | null> {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({ message: "get_playing_state" }, (response) => {
       if (response && response.message === "playing_state") {
@@ -163,7 +163,7 @@ async function requestPlayingState(): Promise<boolean | null> {
       resolve(null);
     }, 5000);
   });
-}
+}*/
 
 function updateAnimations(): void {
   const videoTitles: NodeListOf<HTMLSpanElement> =
@@ -235,7 +235,7 @@ function addNewActivity(title: string, url: string): HTMLLIElement {
   iconSpan.classList.add("icon");
   newActivity.appendChild(iconSpan);
   const imgTag: HTMLImageElement = document.createElement("img");
-  imgTag.src = getSourceByUrl(url);
+  imgTag.src = getImgSrcByUrl(url);
   imgTag.alt = "icon";
   iconSpan.appendChild(imgTag);
   const scrollContainer: HTMLSpanElement = document.createElement("span");
@@ -258,7 +258,7 @@ function addNewActivity(title: string, url: string): HTMLLIElement {
   return newActivity;
 }
 
-function getSourceByUrl(url: string): string {
+function getImgSrcByUrl(url: string): string {
   if (url.includes("youtube.com")) {
     return "./youtube-icon.png";
   } else if (url.includes("netflix.com")) {

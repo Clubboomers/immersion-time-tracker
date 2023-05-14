@@ -1,8 +1,5 @@
 import "reflect-metadata";
-import {
-  Expose,
-  Type,
-} from "class-transformer";
+import { Expose, Type } from "class-transformer";
 import { TimeEntry } from "./timeentry";
 
 export class VideoEntry {
@@ -17,7 +14,11 @@ export class VideoEntry {
   private durationWatched: number;
 
   // make videoName optional, and list of timeEntries optional
-  constructor(url: string, videoName: string | null, timeEntries?: TimeEntry[]) {
+  constructor(
+    url: string,
+    videoName: string | null,
+    timeEntries?: TimeEntry[]
+  ) {
     this.url = url;
     this.videoName = videoName;
     this.timeEntries = timeEntries || [];
@@ -74,6 +75,10 @@ export class VideoEntry {
     return this.durationWatched;
   }
 
+  /**
+   * define recent using a range. Can switch out oneDayAgo for oneHourAgo 
+   * @returns true if the last time entry was recent
+   */
   public wasRecent(): boolean {
     console.log("wasRecent() called");
     // get the last time entry that has an end time
@@ -81,8 +86,9 @@ export class VideoEntry {
     if (!lastTimeEntry) return false;
     let timeStamp = lastTimeEntry.getEndTime() || lastTimeEntry.getStartTime(); // if there is no end time, get the start time
     const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000); // 60 minutes * 60 seconds * 1000 milliseconds
-    return timeStamp > oneHourAgo;
+    return timeStamp > oneDayAgo;
   }
 
   public getLastTimeEntry(): TimeEntry | null {
@@ -92,11 +98,11 @@ export class VideoEntry {
     return null;
   }
 
-/**
- * 
- * @param range The range in hours
- * @returns The number of milliseconds watched within the range
- */
+  /**
+   *
+   * @param range The range in hours
+   * @returns The number of milliseconds watched within the range
+   */
   public getWatchtimeMillis(range: number): number {
     const now = new Date();
     const rangeInMilliseconds = range * 60 * 60 * 1000; // 60 minutes * 60 seconds * 1000 milliseconds
@@ -117,7 +123,8 @@ export class VideoEntry {
   public setLastTimeEntryEndTime(endTime: Date): void {
     if (this.timeEntries.length > 0) {
       const lastTimeEntry = this.getLastTimeEntry();
-      if (!lastTimeEntry) throw new Error("Cannot set value because lastTimeEntry is null");
+      if (!lastTimeEntry)
+        throw new Error("Cannot set value because lastTimeEntry is null");
       lastTimeEntry.setEndTime(endTime);
     }
     this.updateDurationWatched();
