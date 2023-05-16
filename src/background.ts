@@ -1,6 +1,5 @@
-import "reflect-metadata";
 import { TimeTracker } from "./timetracker";
-import saveManager from "./savemanager";
+//import saveManager from "./savemanager";
 
 let timeTracker = TimeTracker.getInstance(
   "Immersion Time Tracker",
@@ -9,67 +8,14 @@ let timeTracker = TimeTracker.getInstance(
 let activeTabs: { id: number; url: string }[] = []; // the tabs that are currently open
 let playingVideos: { title: string | null; url: string }[] = [];
 
-/**
- * override push method to start timer when first video is played
- */
-playingVideos.push = function (item) {
-  if (this.length === 0) {
-    startTimer();
-    chrome.runtime.sendMessage({
-      message: "playing_state",
-      playing_state: true,
-      url: item.url,
-      string: item.title,
-    });
-  }
-  return Array.prototype.push.call(this, item);
-};
-
-/**
- * override pop method to stop timer when last video is stopped
- */
-playingVideos.filter = function (callback: any) {
-  const result = Array.prototype.filter.call(this, callback);
-  if (result.length === 0) {
-    stopTimer();
-    chrome.runtime.sendMessage({
-      message: "playing_state",
-      playing_state: false,
-    });
-  }
-  return result;
-};
-
-chrome.runtime.onInstalled.addListener(function () {
-  saveManager.saveExists(function (exists) {
-    if (!exists) {
-      saveManager.saveTimeTracker(timeTracker);
-    } else {
-      try {
-        timeTracker = saveManager.loadTimeTrackerFromStorage() || timeTracker;
-      } catch (error) {
-        console.log(error);
-        saveManager.deleteSave();
-        saveManager.saveTimeTracker(timeTracker);
-      }
-    }
-  });
-});
-
-/**
- * TODO: implement better saving
- */
-setInterval(() => {
-  updateEndTimePlayingVideos();
-  console.log(activeTabs);
-  console.log(playingVideos);
-  saveManager.saveTimeTracker(timeTracker);
-  console.log(timeTracker);
-}, 10000);
-
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // listen for messages sent from video.ts
   console.log(request);
+
+  if (request.message === "what_url") {
+    sendResponse({ message: "url", url: sender.tab?.url });
+  }
+
   if (request.message === "update") {
     const title = request.title;
     const url = request.url;
@@ -116,12 +62,70 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }*/
 });
 
-chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-  if (isYouTube(tab.url) && changeInfo.status === "complete") {
+/**
+ * override push method to start timer when first video is played
+ */
+/*playingVideos.push = function (item) {
+  if (this.length === 0) {
+    startTimer();
+    chrome.runtime.sendMessage({
+      message: "playing_state",
+      playing_state: true,
+      url: item.url,
+      string: item.title,
+    });
+  }
+  return Array.prototype.push.call(this, item);
+};*/
+
+/**
+ * override pop method to stop timer when last video is stopped
+ */
+/*playingVideos.filter = function (callback: any) {
+  const result = Array.prototype.filter.call(this, callback);
+  if (result.length === 0) {
+    stopTimer();
+    chrome.runtime.sendMessage({
+      message: "playing_state",
+      playing_state: false,
+    });
+  }
+  return result;
+};*/
+
+/*chrome.runtime.onInstalled.addListener(function () {
+  saveManager.saveExists(function (exists) {
+    if (!exists) {
+      saveManager.saveTimeTracker(timeTracker);
+    } else {
+      try {
+        timeTracker = saveManager.loadTimeTrackerFromStorage() || timeTracker;
+      } catch (error) {
+        console.log(error);
+        saveManager.deleteSave();
+        saveManager.saveTimeTracker(timeTracker);
+      }
+    }
+  });
+});*/
+
+/**
+ * TODO: implement better saving
+ */
+setInterval(() => {
+  updateEndTimePlayingVideos();
+  console.log(activeTabs);
+  console.log(playingVideos);
+  //saveManager.saveTimeTracker(timeTracker);
+  console.log(timeTracker);
+}, 10000);
+
+/*chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+  if (isYoutubeVideo(tab.url) && changeInfo.status === "complete") {
     // tab is on YouTube and has finished loading
     addToActiveTabs(tabId, tab.url);
   }
-});
+});*/
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   console.log("tab closed: " + tabId);
@@ -138,7 +142,7 @@ function addToActiveTabs(
   url: string | undefined
 ): void {
   if (!url || !tabId) return;
-  if (!isYouTube(url)) return;
+  if (!isYoutubeVideo(url)) return;
   if (activeTabsContain(tabId)) {
     // tab is already in activeTabs
 
@@ -154,11 +158,11 @@ function addToActiveTabs(
     }
 
     changeActiveTabUrl(tabId, url);
-    sendMessage(tabId, "new_url", url);
+    //sendMessage(tabId, "new_url", url);
     return;
   }
   activeTabs.push({ id: tabId, url: url });
-  sendMessage(tabId, "new_url", url);
+  //sendMessage(tabId, "new_url", url);
 }
 
 /**
@@ -207,7 +211,7 @@ function activeTabsContain(tabId: number): boolean {
   return activeTabs.some((tab) => tab?.id === tabId);
 }
 
-function sendMessage(
+/*function sendMessage(
   tabId: number,
   message: string,
   url: string | undefined
@@ -218,7 +222,7 @@ function sendMessage(
     message: message,
     url: url,
   });
-}
+}*/
 
 function handleUpdate(
   title: string | null,
@@ -260,7 +264,7 @@ function handleUpdate(
       });
       break;
   }
-  saveManager.saveTimeTracker(timeTracker);
+  //saveManager.saveTimeTracker(timeTracker);
 }
 
 /**
@@ -285,7 +289,7 @@ function stopTimer(): void {
   }
 }
 
-export function isYouTube(url: string | undefined): boolean {
+function isYoutubeVideo(url: string | undefined): boolean {
   if (!url) return false;
   if (url.includes("youtube.com/watch") && !url.includes("music.youtube")) {
     return true;

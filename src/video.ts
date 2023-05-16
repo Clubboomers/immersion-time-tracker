@@ -1,25 +1,33 @@
-let videoElement: HTMLVideoElement | null;
-let thisUrl: string = window.location.href;
+
+/*let videoElement: HTMLVideoElement | null;
+let thisUrl: string;
 let videoIsPlaying: boolean | undefined;
 let videoHasListeners: boolean = false;
 let hasPlayed: boolean = false; // has the video played at least once yet?
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+console.log("content script loaded");
+chrome.runtime.sendMessage({ message: "what_url" }, (response) => {
+  console.log(response);
+  thisUrl = response.url;
+  console.log(`This URL: ${thisUrl}`);
+});*/
+
+/*document.addEventListener("visibilitychange", async () => {
+  console.log("document visibility: " + document.visibilityState);
+  if (document.visibilityState === "visible" && !hasPlayed) {
+    onUrlChange();
+  }
+});*/
+
+/*chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // listen for messages sent from background.js
   if (request.message === "new_url") {
     thisUrl = request.url;
     onUrlChange(); // new url is now in content scripts!
   }
-});
+});*/
 
-document.addEventListener("visibilitychange", async () => {
-  console.log("document visible: " + document.visibilityState);
-  if (document.visibilityState === "visible" && !hasPlayed) {
-    onUrlChange();
-  }
-});
-
-async function onUrlChange(): Promise<void> {
+/*async function onUrlChange(): Promise<void> {
   hasPlayed = false;
   videoHasListeners = false;
   videoElement = null;
@@ -35,9 +43,9 @@ async function onUrlChange(): Promise<void> {
     setVideoOnPlayPause(videoElement);
     console.log("Added event listeners to video element");
   }
-}
+}*/
 
-async function getVideoElement(): Promise<HTMLVideoElement> {
+/*async function getVideoElement(): Promise<HTMLVideoElement> {
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(() => {
       // wait for video to load
@@ -54,12 +62,12 @@ async function getVideoElement(): Promise<HTMLVideoElement> {
       }
     }, 100);
   });
-}
+}*/
 
 /**
  * Called when the user closes the tab or navigates to a new page.
  */
-function handleUnexpectedClose(): void {
+/*function handleUnexpectedClose(): void {
   if (isPlaying()) {
     // if video is playing, set endTime to now
     console.log("Unexpected url change detected, stopping timer...");
@@ -102,7 +110,7 @@ function reportPlayToBackground(): void {
 function reportPauseToBackground(): void {
   videoIsPlaying = false;
   sendUpdateToBackground();
-}
+}*/
 
 /**
  * When a video is loaded in the background,
@@ -111,7 +119,7 @@ function reportPauseToBackground(): void {
  * Check if the document is visible to combat this issue.
  * @returns true if video is playing, false otherwise
  */
-function isPlaying(): boolean {
+/*function isPlaying(): boolean {
   if (videoElement) {
     console.log("video is playing: " + !videoElement.paused);
     return !videoElement.paused && document.visibilityState === "visible";
@@ -130,7 +138,7 @@ function isPlaying(): boolean {
   console.log("sent message to background");
 }*/
 
-async function sendUpdateToBackground(): Promise<void> {
+/*async function sendUpdateToBackground(): Promise<void> {
   if (!hasPlayed) return; // don't send update if video hasn't played yet
   console.log("sending update to background");
   chrome.runtime.sendMessage({
@@ -195,6 +203,28 @@ async function getVideoTitle(): Promise<string | null> {
   });
 }
 
-function getUrl(): string {
-  return thisUrl;
+function getUrl(): string | undefined {
+  if (thisUrl) {
+    return thisUrl;
+  }
 }
+function initVideo() {
+  if (!isYoutubeVideo(thisUrl)) return;
+  console.log("Initializing video...");
+  videoElement = document.querySelector("video");
+  if (videoElement) {
+    addEventListeners(videoElement);
+  }
+}
+
+function doNothing() {
+  return;
+}
+
+function isYoutubeVideo(url: string | undefined): boolean {
+  if (!url) return false;
+  if (url.includes("youtube.com/watch") && !url.includes("music.youtube")) {
+    return true;
+  }
+  return false;
+}*/

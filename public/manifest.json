@@ -19,8 +19,8 @@
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["video.js"],
-      "run_at": "document_end"
+      "js": ["youtube.js"],
+      "run_at": "document_start"
     }
   ],
   "host_permissions": ["*://*.youtube.com/*"],

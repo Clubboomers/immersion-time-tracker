@@ -10,6 +10,7 @@ module.exports = {
       videoentry: path.resolve(__dirname, "..", "src", "videoentry.ts"),
       timeentry: path.resolve(__dirname, "..", "src", "timeentry.ts"),
       popup: path.resolve(__dirname, "..", "src", "popup.ts"),
+      youtube: path.resolve(__dirname, "..", "src", "youtube.ts"),
    },
    output: {
       path: path.join(__dirname, "../dist"),
