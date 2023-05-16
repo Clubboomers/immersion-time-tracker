@@ -4,12 +4,29 @@
   padding: 0;
 }
 
+html,
 body {
-  width: 100%;
-  height: 100%;
+  font-family: "Roboto", sans-serif;
+  width: 100vw;
+  height: 100vh;
+  background-color: #3b3936;
+  color: #f2f2f2;
 }
 
-h1 {
-  text-align: center;
-  color: red;
+.wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  font-size: 0.8rem;
+  width: 100%;
+  height: 50px;
+  color: #f23d3d;
+  border-bottom: 1px solid #545150;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
