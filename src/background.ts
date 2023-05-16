@@ -1,6 +1,5 @@
 import { TimeTracker } from "./timetracker";
 import saveManager from "./savemanager";
-import { franc } from "franc-min";
 //import saveManager from "./savemanager";
 
 let timeTracker = TimeTracker.getInstance(
@@ -9,7 +8,7 @@ let timeTracker = TimeTracker.getInstance(
 );
 let activeTabs: { id: number; url: string }[] = []; // tabs with videos playing
 let playingVideos: { title: string | null; url: string }[] = [];
-const targetLanguage = "jpn";
+const targetLanguage = "ja";
 
 checkForSave();
 
@@ -25,14 +24,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const title = request.title;
     const url = request.url;
     const isPlaying = JSON.parse(request.isPlaying);
-    console.log("received message: " + title + "\n language: " + franc(title));
     if (url) {
       handleUpdate(title, url, isPlaying, sender.tab?.id);
     }
   }
 
   if (request.message === "get_popup_info") {
-    const recentActivity: {url: string, title:string}[] = timeTracker.getRecentActivity();
+    const recentActivity: { url: string; title: string }[] =
+      timeTracker.getRecentActivity();
     let now = new Date();
     let watchtimeToday: number = timeTracker.getWatchTimeMillis(
       now.getHours() + now.getMinutes() / 60
@@ -109,13 +108,6 @@ setInterval(() => {
   console.log(timeTracker);
 }, 10000);
 
-/*chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-  if (isYoutubeVideo(tab.url) && changeInfo.status === "complete") {
-    // tab is on YouTube and has finished loading
-    addToActiveTabs(tabId, tab.url);
-  }
-});*/
-
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   console.log("tab closed: " + tabId);
   removeFromActiveTabs(tabId);
@@ -143,11 +135,9 @@ function addToActiveTabs(tabId: number, url: string): void {
     }
 
     changeActiveTabUrl(tabId, url);
-    //sendMessage(tabId, "new_url", url);
     return;
   }
   activeTabs.push({ id: tabId, url: url });
-  //sendMessage(tabId, "new_url", url);
 }
 
 /**
@@ -205,46 +195,47 @@ function handleUpdate(
   console.log("handling update");
   console.log("isPlaying: " + isPlaying);
   const videoInformation = { title, url };
-  switch (isPlaying) {
-    case true:
-      console.log("video is playing");
-      if (title && franc(title) === targetLanguage) {
-        timeTracker.addVideoEntryByUrl(url, title, new Date());
-        playingVideos.push(videoInformation);
-        console.log("playing videos: " + playingVideos.length);
-        if (tabId) activeTabs.push({ id: tabId, url: url });
-        break;
-      }
-    case false:
-      if (title && franc(title) === targetLanguage) {
-        console.log("video is not playing");
-        // find video in playingVideos
-        const stoppedVideoEntry = playingVideos.find(
-          (video: { url: string }) => {
-            return video.url === videoInformation.url;
-          }
-        );
-
-        if (!stoppedVideoEntry) {
-          /*console.error(
-          `Expected to find video entry with url ${videoInformation.url} in playingVideos list`
-        );*/
-          return;
+  chrome.i18n.detectLanguage(title + "", function (result) {
+    console.log(result);
+    switch (isPlaying) {
+      case true:
+        if (result.languages[0].language === targetLanguage) {
+          console.log("video is playing");
+          timeTracker.addVideoEntryByUrl(url, title, new Date());
+          playingVideos.push(videoInformation);
+          console.log("playing videos: " + playingVideos.length);
+          if (tabId) activeTabs.push({ id: tabId, url: url });
+          break;
         }
+      case false:
+        if (result.languages[0].language === targetLanguage) {
+          console.log("video is not playing");
+          // find video in playingVideos
+          const stoppedVideoEntry = playingVideos.find(
+            (video: { url: string }) => {
+              return video.url === videoInformation.url;
+            }
+          );
+          if (!stoppedVideoEntry) {
+            /*console.error(
+            `Expected to find video entry with url ${videoInformation.url} in playingVideos list`
+          );*/
+            return;
+          }
+          // add end time to video entry
+          timeTracker
+            .getVideoEntryByUrl(videoInformation.url)
+            ?.setLastTimeEntryEndTime(new Date());
 
-        // add end time to video entry
-        timeTracker
-          .getVideoEntryByUrl(videoInformation.url)
-          ?.setLastTimeEntryEndTime(new Date());
-
-        // remove video from playingVideos
-        playingVideos = playingVideos.filter((video: { url: string }) => {
-          return video.url !== videoInformation.url;
-        });
-        if (tabId) removeFromActiveTabs(tabId);
-        break;
-      }
-  }
+          // remove video from playingVideos
+          playingVideos = playingVideos.filter((video: { url: string }) => {
+            return video.url !== videoInformation.url;
+          });
+          if (tabId) removeFromActiveTabs(tabId);
+          break;
+        }
+    }
+  });
   saveManager.saveTimeTracker(timeTracker);
 }
 

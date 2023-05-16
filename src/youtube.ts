@@ -7,7 +7,11 @@ let lastUrl: string = thisUrl;
 let videoIsPlaying: boolean | undefined = false;
 let videoHasListeners: boolean = false;
 let hasPlayed: boolean = false;
-const validVideoUrls: string[] = ["youtube.com/watch", "netflix.com/watch", "nicovideo.jp/watch"];
+const validVideoUrls: string[] = [
+  "youtube.com/watch",
+  "netflix.com/watch",
+  "nicovideo.jp/watch",
+];
 const invalidVideoUrls: string[] = ["music.youtube.com"];
 
 function getWindowUrl(): string {
@@ -205,7 +209,7 @@ async function getVideoTitleYoutube(): Promise<string | null> {
 
 async function getVideoTitleNetflix(): Promise<string | null> {
   const videoKey: string = getVideoKey()!;
-  let titleElement = document.querySelector(".id"+videoKey);
+  let titleElement = document.querySelector(".id" + videoKey);
 
   return new Promise((resolve, reject) => {
     if (titleElement) {
@@ -213,7 +217,7 @@ async function getVideoTitleNetflix(): Promise<string | null> {
     }
     let totalTimeout = 0;
     let intervalId = setInterval(() => {
-      titleElement = document.querySelector(".id"+videoKey);
+      titleElement = document.querySelector(".id" + videoKey);
       if (titleElement) {
         clearInterval(intervalId);
         resolve(titleElement.getAttribute("data-title"));
@@ -256,7 +260,10 @@ async function getVideoTitleNico(): Promise<string | null> {
  * @returns the video key for the current video
  */
 function getVideoKey(): string | null {
-  if (thisUrl.includes("netflix.com/watch")) {
+  if (
+    thisUrl.includes("netflix.com/watch") ||
+    thisUrl.includes("nicovideo.jp/watch")
+  ) {
     if (thisUrl.includes("?")) {
       return thisUrl.substring(
         thisUrl.indexOf("/watch/") + 7,
