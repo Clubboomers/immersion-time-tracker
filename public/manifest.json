@@ -18,12 +18,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
+      "matches": ["*://*.youtube.com/*", "*://*.netflix.com/*"],
       "js": ["youtube.js"],
       "run_at": "document_start"
     }
   ],
-  "host_permissions": ["*://*.youtube.com/*"],
+  "host_permissions": ["*://*.youtube.com/*", "*://*.netflix.com/*"],
   "options_page": "options.html",
   "action": {
     "default_popup": "popup.html",
