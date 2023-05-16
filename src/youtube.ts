@@ -1,14 +1,26 @@
-import { clear } from "console";
+import { get } from "http";
 
 let videoElement: HTMLVideoElement | null;
 let videoTitle: string | null;
-let thisUrl: string = window.location.href;
+let thisUrl: string = getWindowUrl();
 let lastUrl: string = thisUrl;
 let videoIsPlaying: boolean | undefined = false;
 let videoHasListeners: boolean = false;
 let hasPlayed: boolean = false;
-const validVideoUrls: string[] = ["youtube.com/watch", "netflix.com/watch"];
+const validVideoUrls: string[] = ["youtube.com/watch", "netflix.com/watch", "nicovideo.jp/watch"];
 const invalidVideoUrls: string[] = ["music.youtube.com"];
+
+function getWindowUrl(): string {
+  let url: string = window.location.href;
+  if (url.includes("?") || url.includes("&")) {
+    if (url.includes("youtube.com") && url.includes("&")) {
+      url = url.split("&")[0];
+    } else if (url.includes("netflix.com") && url.includes("?")) {
+      url = url.split("?")[0];
+    }
+  }
+  return url;
+}
 
 console.log("Content script loaded");
 if (isVideoUrl(thisUrl)) {
@@ -33,6 +45,15 @@ async function initVideo() {
     });
   } else if (thisUrl.includes("netflix.com/watch")) {
     videoTitle = await getVideoTitleNetflix().then((title) => {
+      if (title) {
+        console.log("title: " + title);
+        return title;
+      } else {
+        return "";
+      }
+    });
+  } else if (thisUrl.includes("nicovideo.jp/watch")) {
+    videoTitle = await getVideoTitleNico().then((title) => {
       if (title) {
         console.log("title: " + title);
         return title;
@@ -67,9 +88,9 @@ function updatedUrl(): void {
  * for some reason you get an error
  */
 let intervalId = setInterval(() => {
-  if (thisUrl !== window.location.href) {
+  if (thisUrl !== getWindowUrl()) {
     lastUrl = thisUrl;
-    thisUrl = window.location.href;
+    thisUrl = getWindowUrl();
     updatedUrl();
   }
 }, 1000);
@@ -125,14 +146,14 @@ function sendUpdateToBackground(
 async function getVideoElement(): Promise<HTMLVideoElement | null> {
   return new Promise((resolve, reject) => {
     const videoElement = document.querySelector("video");
-    if (videoElement) {
+    if (videoElement && videoElement.hasAttribute("src")) {
       resolve(videoElement);
     } else {
       const observer = new MutationObserver((mutationsList) => {
         for (let mutation of mutationsList) {
           if (mutation.type === "childList") {
             const videoElement = document.querySelector("video");
-            if (videoElement) {
+            if (videoElement && videoElement.hasAttribute("src")) {
               console.log("found video element");
               clearTimeout(timeoutId);
               observer.disconnect();
@@ -159,13 +180,13 @@ async function getVideoTitleYoutube(): Promise<string | null> {
     "#container > h1 > yt-formatted-string"
   );
 
-  if (titleElement) {
-    return titleElement.innerHTML;
-  }
-
   return new Promise((resolve, reject) => {
+    if (titleElement) {
+      resolve(titleElement.innerHTML);
+    }
+
     let totalTimeout = 0;
-    intervalId = setInterval(() => {
+    let intervalId = setInterval(() => {
       titleElement = document.querySelector(
         "#container > h1 > yt-formatted-string"
       );
@@ -183,16 +204,16 @@ async function getVideoTitleYoutube(): Promise<string | null> {
 }
 
 async function getVideoTitleNetflix(): Promise<string | null> {
-  let titleElement = document.querySelector("div[data-title]");
-
-  if (titleElement) {
-    return titleElement.getAttribute("data-title");
-  }
+  const videoKey: string = getVideoKey()!;
+  let titleElement = document.querySelector(".id"+videoKey);
 
   return new Promise((resolve, reject) => {
+    if (titleElement) {
+      resolve(titleElement.getAttribute("data-title"));
+    }
     let totalTimeout = 0;
-    intervalId = setInterval(() => {
-      titleElement = document.querySelector("div[data-title]");
+    let intervalId = setInterval(() => {
+      titleElement = document.querySelector(".id"+videoKey);
       if (titleElement) {
         clearInterval(intervalId);
         resolve(titleElement.getAttribute("data-title"));
@@ -204,6 +225,52 @@ async function getVideoTitleNetflix(): Promise<string | null> {
       }
     }, 100);
   });
+}
+
+async function getVideoTitleNico(): Promise<string | null> {
+  let titleElement = document.querySelector(".VideoTitle");
+
+  return new Promise((resolve, reject) => {
+    if (titleElement) {
+      resolve(titleElement.textContent);
+    }
+
+    let totalTimeout = 0;
+    let intervalId = setInterval(() => {
+      titleElement = document.querySelector(".VideoTitle");
+      if (titleElement) {
+        clearInterval(intervalId);
+        resolve(titleElement.textContent);
+      }
+      totalTimeout += 100;
+      if (totalTimeout > 5000) {
+        clearInterval(intervalId);
+        resolve(null);
+      }
+    }, 100);
+  });
+}
+
+/**
+ * get the video key for the current video using the url
+ * @returns the video key for the current video
+ */
+function getVideoKey(): string | null {
+  if (thisUrl.includes("netflix.com/watch")) {
+    if (thisUrl.includes("?")) {
+      return thisUrl.substring(
+        thisUrl.indexOf("/watch/") + 7,
+        thisUrl.indexOf("?")
+      );
+    }
+    return thisUrl.substring(thisUrl.indexOf("/watch/") + 7);
+  } else if (thisUrl.includes("youtube.com/watch")) {
+    if (thisUrl.includes("&")) {
+      return thisUrl.split("?v=")[1].split("&")[0];
+    }
+    return thisUrl.split("?v=")[1];
+  }
+  return null;
 }
 
 function isPlaying(): boolean {

@@ -18,12 +18,20 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*", "*://*.netflix.com/*"],
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://*.netflix.com/*",
+        "*://*.nicovideo.jp/*"
+      ],
       "js": ["youtube.js"],
       "run_at": "document_start"
     }
   ],
-  "host_permissions": ["*://*.youtube.com/*", "*://*.netflix.com/*"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.netflix.com/*",
+    "*://*.nicovideo.jp/*"
+  ],
   "options_page": "options.html",
   "action": {
     "default_popup": "popup.html",

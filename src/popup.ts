@@ -263,6 +263,8 @@ function getImgSrcByUrl(url: string): string {
     return "./youtube-icon.png";
   } else if (url.includes("netflix.com")) {
     return "./netflix-icon.png";
+  } else if (url.includes("nicovideo.jp")) {
+    return "./nicovideo-icon.png";
   }
   return "";
 }

@@ -1,12 +1,17 @@
 import { TimeTracker } from "./timetracker";
+import saveManager from "./savemanager";
+import { franc } from "franc-min";
 //import saveManager from "./savemanager";
 
 let timeTracker = TimeTracker.getInstance(
   "Immersion Time Tracker",
   "Tracks time immersing in a language"
 );
-let activeTabs: { id: number; url: string }[] = []; // the tabs that are currently open
+let activeTabs: { id: number; url: string }[] = []; // tabs with videos playing
 let playingVideos: { title: string | null; url: string }[] = [];
+const targetLanguage = "jpn";
+
+checkForSave();
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // listen for messages sent from video.ts
@@ -20,18 +25,19 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const title = request.title;
     const url = request.url;
     const isPlaying = JSON.parse(request.isPlaying);
+    console.log("received message: " + title + "\n language: " + franc(title));
     if (url) {
       handleUpdate(title, url, isPlaying, sender.tab?.id);
     }
   }
 
   if (request.message === "get_popup_info") {
-    const recentActivity = timeTracker.getRecentActivity();
+    const recentActivity: {url: string, title:string}[] = timeTracker.getRecentActivity();
     let now = new Date();
-    let watchtimeToday = timeTracker.getWatchTimeMillis(
+    let watchtimeToday: number = timeTracker.getWatchTimeMillis(
       now.getHours() + now.getMinutes() / 60
     ); // hours since midnight
-    const playingState = playingVideos.length > 0;
+    const playingState: boolean = playingVideos.length > 0;
     sendResponse({
       message: "popup_info",
       recentActivity: recentActivity,
@@ -39,27 +45,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       playingState: playingState,
     });
   }
-
-  /*if (request.message === "get_recent_activity") {
-    const recentActivity = timeTracker.getRecentActivity();
-    sendResponse({
-      message: "recent_activity",
-      recentActivity: recentActivity,
-    });
-  }
-
-  if (request.message === "get_watchtime_today") {
-    const watchtimeToday = timeTracker.getWatchTimeMillis(24);
-    sendResponse({
-      message: "watchtime_today",
-      watchtimeToday: watchtimeToday,
-    });
-  }
-
-  if (request.message === "get_playing_state") {
-    const playingState = playingVideos.length > 0;
-    sendResponse({ message: "playing_state", playingState: playingState });
-  }*/
 });
 
 /**
@@ -93,7 +78,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   return result;
 };*/
 
-/*chrome.runtime.onInstalled.addListener(function () {
+chrome.runtime.onInstalled.addListener(function () {
+  checkForSave();
+});
+
+function checkForSave() {
   saveManager.saveExists(function (exists) {
     if (!exists) {
       saveManager.saveTimeTracker(timeTracker);
@@ -107,15 +96,15 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       }
     }
   });
-});*/
+}
 
 /**
  * TODO: implement better saving
  */
 setInterval(() => {
   updateEndTimePlayingVideos();
-  console.log(activeTabs);
-  console.log(playingVideos);
+  console.log("active tabs: " + activeTabs.length);
+  console.log("playing videos: " + playingVideos.length);
   //saveManager.saveTimeTracker(timeTracker);
   console.log(timeTracker);
 }, 10000);
@@ -137,12 +126,8 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
  * @param tabId
  * @param url
  */
-function addToActiveTabs(
-  tabId: number | undefined,
-  url: string | undefined
-): void {
+function addToActiveTabs(tabId: number, url: string): void {
   if (!url || !tabId) return;
-  if (!isYoutubeVideo(url)) return;
   if (activeTabsContain(tabId)) {
     // tab is already in activeTabs
 
@@ -211,19 +196,6 @@ function activeTabsContain(tabId: number): boolean {
   return activeTabs.some((tab) => tab?.id === tabId);
 }
 
-/*function sendMessage(
-  tabId: number,
-  message: string,
-  url: string | undefined
-): void {
-  console.log("sending message to tab " + tabId);
-  if (!url) return;
-  chrome.tabs.sendMessage(tabId, {
-    message: message,
-    url: url,
-  });
-}*/
-
 function handleUpdate(
   title: string | null,
   url: string,
@@ -236,38 +208,44 @@ function handleUpdate(
   switch (isPlaying) {
     case true:
       console.log("video is playing");
-      timeTracker.addVideoEntryByUrl(url, title, new Date());
-      playingVideos.push(videoInformation);
-      console.log("playing videos: " + playingVideos.length);
-      if (tabId) activeTabs.push({ id: tabId, url: url });
-      break;
+      if (title && franc(title) === targetLanguage) {
+        timeTracker.addVideoEntryByUrl(url, title, new Date());
+        playingVideos.push(videoInformation);
+        console.log("playing videos: " + playingVideos.length);
+        if (tabId) activeTabs.push({ id: tabId, url: url });
+        break;
+      }
     case false:
-      console.log("video is not playing");
-      // find video in playingVideos
-      const stoppedVideoEntry = playingVideos.find((video: { url: string }) => {
-        return video.url === videoInformation.url;
-      });
+      if (title && franc(title) === targetLanguage) {
+        console.log("video is not playing");
+        // find video in playingVideos
+        const stoppedVideoEntry = playingVideos.find(
+          (video: { url: string }) => {
+            return video.url === videoInformation.url;
+          }
+        );
 
-      if (!stoppedVideoEntry) {
-        /*console.error(
+        if (!stoppedVideoEntry) {
+          /*console.error(
           `Expected to find video entry with url ${videoInformation.url} in playingVideos list`
         );*/
-        return;
+          return;
+        }
+
+        // add end time to video entry
+        timeTracker
+          .getVideoEntryByUrl(videoInformation.url)
+          ?.setLastTimeEntryEndTime(new Date());
+
+        // remove video from playingVideos
+        playingVideos = playingVideos.filter((video: { url: string }) => {
+          return video.url !== videoInformation.url;
+        });
+        if (tabId) removeFromActiveTabs(tabId);
+        break;
       }
-
-      // add end time to video entry
-      timeTracker
-        .getVideoEntryByUrl(videoInformation.url)
-        ?.setLastTimeEntryEndTime(new Date());
-
-      // remove video from playingVideos
-      playingVideos = playingVideos.filter((video: { url: string }) => {
-        return video.url !== videoInformation.url;
-      });
-      if (tabId) removeFromActiveTabs(tabId);
-      break;
   }
-  //saveManager.saveTimeTracker(timeTracker);
+  saveManager.saveTimeTracker(timeTracker);
 }
 
 /**
