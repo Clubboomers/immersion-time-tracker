@@ -21,7 +21,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const url = request.url;
     const isPlaying = JSON.parse(request.isPlaying);
     if (url) {
-      handleUpdate(title, url, isPlaying);
+      handleUpdate(title, url, isPlaying, sender.tab?.id);
     }
   }
 
@@ -227,7 +227,8 @@ function activeTabsContain(tabId: number): boolean {
 function handleUpdate(
   title: string | null,
   url: string,
-  isPlaying: boolean
+  isPlaying: boolean,
+  tabId: number | undefined
 ): void {
   console.log("handling update");
   console.log("isPlaying: " + isPlaying);
@@ -238,6 +239,7 @@ function handleUpdate(
       timeTracker.addVideoEntryByUrl(url, title, new Date());
       playingVideos.push(videoInformation);
       console.log("playing videos: " + playingVideos.length);
+      if (tabId) activeTabs.push({ id: tabId, url: url });
       break;
     case false:
       console.log("video is not playing");
@@ -262,6 +264,7 @@ function handleUpdate(
       playingVideos = playingVideos.filter((video: { url: string }) => {
         return video.url !== videoInformation.url;
       });
+      if (tabId) removeFromActiveTabs(tabId);
       break;
   }
   //saveManager.saveTimeTracker(timeTracker);
