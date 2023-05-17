@@ -173,7 +173,7 @@ async function getVideoElement(): Promise<HTMLVideoElement | null> {
         observer.disconnect();
         console.error("Could not find video element");
         resolve(null);
-      }, 10000);
+      }, 100000);
     }
   });
 }
@@ -181,7 +181,7 @@ async function getVideoElement(): Promise<HTMLVideoElement | null> {
 async function getVideoTitleYoutube(): Promise<string | null> {
   // select the title element
   let titleElement = document.querySelector(
-    "#container > h1 > yt-formatted-string"
+    "h1 > yt-formatted-string"
   );
 
   return new Promise((resolve, reject) => {
@@ -192,7 +192,7 @@ async function getVideoTitleYoutube(): Promise<string | null> {
     let totalTimeout = 0;
     let intervalId = setInterval(() => {
       titleElement = document.querySelector(
-        "#container > h1 > yt-formatted-string"
+        "h1 > yt-formatted-string"
       );
       if (titleElement) {
         clearInterval(intervalId);
