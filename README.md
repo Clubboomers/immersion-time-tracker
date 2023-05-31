@@ -7,10 +7,11 @@ Tool to automatically track time you spend watching videos (immersing) on sites 
 ### Steps
 
 1. Download the latest release as a .zip file. 
-2. Navigate to your Chrome extensions.
-3. Enable "Developer mode" in the top right.
-4. Press "Load unpacked" in the top left and select the downloaded .zip file.
-5. Enjoy!
+2. Extract to an empty folder.
+3. Navigate to your Chrome extensions.
+4. Enable "Developer mode" in the top right.
+5. Press "Load unpacked" in the top left and select the downloaded .zip file.
+6. Enjoy!
 
 ## Features
 
