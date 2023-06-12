@@ -31,7 +31,7 @@ function saveOptions(): void {
       '#domainsToTrack input[type="checkbox"]'
     );
     checkboxes.forEach((checkbox) => {
-      const domain: string = checkbox.id;
+      const domain: string = checkbox.value;
       const checked: boolean = checkbox.checked;
       domainsToTrack[domain] = checked;
     });
@@ -39,7 +39,7 @@ function saveOptions(): void {
     const domainsToAlwaysTrack: string[] = [];
     const domainsToAlwaysTrackElements =
       document.querySelectorAll<HTMLInputElement>(
-        "#domainsToAlwaysTrack #listItem p"
+        "#domainsToAlwaysTrack .listItem p"
       );
     domainsToAlwaysTrackElements.forEach((domainElement) => {
       const domain: string = domainElement.innerHTML;
@@ -49,7 +49,7 @@ function saveOptions(): void {
     const blacklistedKeywords: string[] = [];
     const blacklistedKeywordsElements =
       document.querySelectorAll<HTMLInputElement>(
-        "#blacklistedKeywords #listItem p"
+        "#blacklistedKeywords .listItem p"
       );
     blacklistedKeywordsElements.forEach((keywordElement) => {
       const keyword: string = keywordElement.innerHTML;
@@ -165,11 +165,13 @@ function loadOptions(options: Options): void {
   }
 
   const blacklistedKeywords: string[] = options.getBlacklistedKeywords();
-  parentDiv = document.querySelector("#blacklistedKeyWords") as HTMLDivElement;
+  parentDiv = document.querySelector("#blacklistedKeywords") as HTMLDivElement;
   for (let i = 0; i < blacklistedKeywords.length; i++) {
     const keyword: string = blacklistedKeywords[i];
     addElementToList(parentDiv, keyword);
   }
+
+  console.log("options loaded", options);
 }
 
 function togglePrefLangEnabled(): void {
