@@ -10,10 +10,11 @@ Works best for free-flow immersion. Support for active immersion, where the vide
 
 1. Download the latest release as a .zip file. 
 2. Unzip it in an empty directory of your choice.
-3. Navigate to your Chrome extensions.
+3. Navigate to your Chrome extensions ( chrome://extensions/ ).
 4. Enable "Developer mode" in the top right.
 5. Press "Load unpacked" in the top left and select the directory.
-6. Enjoy!
+6. Restart your browser.
+7. Enjoy!
 
 ## Features
 

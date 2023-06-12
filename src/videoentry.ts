@@ -86,9 +86,8 @@ export class VideoEntry {
     if (!lastTimeEntry) return false;
     let timeStamp = lastTimeEntry.getEndTime() || lastTimeEntry.getStartTime(); // if there is no end time, get the start time
     const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000); // 60 minutes * 60 seconds * 1000 milliseconds
-    return timeStamp > oneDayAgo;
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
+    return timeStamp > threeDaysAgo;
   }
 
   public getLastTimeEntry(): TimeEntry | null {

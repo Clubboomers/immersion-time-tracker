@@ -4,12 +4,127 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Options</title>
     <link rel="stylesheet" href="options.css" />
   </head>
-  <div class="wrapper">
-    <header>
-      <h1>Options</h1>
-    </header>
-</body>
+  <body>
+    <div class="wrapper">
+      <hgroup>
+        <h1>Options</h1>
+        <h2>Change your tracking prefrences</h2>
+      </hgroup>
+      <form id="optionsForm">
+        <fieldset>
+          <legend>Preferred language</legend>
+          <label for="prefLangEnabled">
+            <div>
+              <input type="checkbox" role="switch" id="prefLangEnabled" />
+              Enable preferred language
+            </div>
+            <span
+              class="help-icon"
+              title="Setting a preferred language will limit tracking to videos in the target language."
+              >?</span
+            >
+          </label>
+          <label
+            class="hidden"
+            for="preferredLanguage"
+            id="preferredLanguageField"
+          >
+            <div>
+              Preferred language
+              <select name="preferredLanguage" id="preferredLanguage" required>
+                <option value="" selected>Select a language...</option>
+              </select>
+            </div>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Automatic tracking</legend>
+          <!-- make group element for checkboxes below -->
+          <fieldset id="domainsToTrack">
+            <legend>Track on these websites:</legend>
+            <label for="youtube">
+              <div>
+                <input
+                  type="checkbox"
+                  id="youtube"
+                  name="youtube"
+                  value="youtube.com"
+                  enabled
+                />
+                YouTube
+              </div>
+            </label>
+            <label for="netflix">
+              <div>
+                <input
+                  type="checkbox"
+                  id="netflix"
+                  name="netflix"
+                  value="netflix.com"
+                  enabled
+                />
+                Netflix
+              </div>
+            </label>
+            <label for="nicovideo">
+              <div>
+                <input
+                  type="checkbox"
+                  id="nicovideo"
+                  name="nicovideo"
+                  value="nicovideo.jp"
+                  enabled
+                />
+                NicoVideo
+              </div>
+            </label>
+          </fieldset>
+          <!-- Field for custom domains -->
+          <fieldset class="list">
+            <legend>
+              Always track on these domains:
+              <span
+                class="help-icon"
+                title="Every video played on one of these domains will trigger the timer to start tracking regardless of automatic tracking and preferred language settings."
+                >?</span
+              >
+            </legend>
+            <div id="domainsToAlwaysTrack">
+              <div id="listHead">
+                <input
+                  type="text"
+                  class="listInput"
+                  placeholder="e.g. google.com"
+                />
+                <button type="button" class="button" id="addToList">Add</button>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="list">
+            <legend>
+              Exclude tracking with keywords:
+              <span
+                class="help-icon"
+                title="Videos with the following word(s) in their title will be exempt from tracking on supported websites."
+              >
+                ?</span
+              >
+            </legend>
+            <div id="blacklistedKeyWords">
+              <div id="listHead">
+                <input type="text" class="listInput" placeholder="e.g. music" />
+                <button type="button" class="button" id="addToList">Add</button>
+              </div>
+            </div>
+          </fieldset>
+        </fieldset>
+        <button type="submit" class="contrast">Save</button>
+      </form>
+    </div>
+    <script src="options.js"></script>
+  </body>
 </html>
