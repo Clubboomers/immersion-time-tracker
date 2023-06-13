@@ -1,4 +1,5 @@
 let timer: number;
+let watchtimeTotal: number;
 let timerActive: boolean = false;
 let recentActivity: {
   listItem?: HTMLLIElement;
@@ -20,6 +21,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+/**
+ * 
+ * @returns 
+ */
 async function init() {
   // populate the list of recent activities with videos watched the last hour
   const popupInfo = await requestPopupInfo().then((result) => {
@@ -40,6 +45,7 @@ async function init() {
     recentActivity.push(newActivity);
   });
   popupInfo.watchtimeToday ? (timer = popupInfo.watchtimeToday) : (timer = 0);
+  watchtimeTotal = popupInfo.watchtimeTotal;
   updateTimer();
   popupInfo.playingState ? startTimer() : updateTimer();
 }
@@ -47,6 +53,7 @@ async function init() {
 async function requestPopupInfo(): Promise<{
   recentActivity: { url: string; title: string }[];
   watchtimeToday: number;
+  watchtimeTotal: number;
   playingState: boolean;
 } | null> {
   return new Promise((resolve, reject) => {
@@ -62,9 +69,10 @@ async function requestPopupInfo(): Promise<{
         );
 
         const watchtimeToday = response.watchtimeToday;
+        const watchtimeTotal = response.watchtimeTotal;
         const playingState = response.playingState;
 
-        resolve({ recentActivity, watchtimeToday, playingState });
+        resolve({ recentActivity, watchtimeToday, watchtimeTotal, playingState });
       } else {
         console.error("Failed to get popup info: invalid response", response);
         resolve(null);
@@ -78,92 +86,6 @@ async function requestPopupInfo(): Promise<{
     }, 5000);
   });
 }
-
-/*async function requestRecentActivity(): Promise<
-  { url: string; title: string }[] | null
-> {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      { message: "get_recent_activity" },
-      (response) => {
-        if (response && response.message === "recent_activity") {
-          clearTimeout(timeoutId);
-          const recentActivity: { url: string; title: string }[] = [];
-          response.recentActivity.forEach(
-            (activity: { url: string; title: string }) => {
-              recentActivity.push(activity);
-            }
-          );
-          resolve(recentActivity);
-        } else {
-          console.error(
-            "Failed to get recent activity: invalid response",
-            response
-          );
-          resolve(null);
-        }
-      }
-    );
-
-    // make promise expire after not receiving a response for 5 seconds
-    const timeoutId = setTimeout(() => {
-      console.error("Failed to get recent activity: promise timed out");
-      resolve(null);
-    }, 5000);
-  });
-}
-
-async function requestWatchtimeToday(): Promise<number | null> {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      { message: "get_watchtime_today" },
-      (response) => {
-        if (response && response.message === "watchtime_today") {
-          clearTimeout(timeoutId);
-          const watchtimeToday: number = response.watchtimeToday;
-          resolve(watchtimeToday);
-        } else {
-          console.error("Failed to get watchtime: invalid response", response);
-          resolve(null);
-        }
-      }
-    );
-
-    // make promise expire after not receiving a response for 5 seconds
-    const timeoutId = setTimeout(() => {
-      console.error("Failed to get watchtime: promise timed out");
-      resolve(null);
-    }, 5000);
-  });
-}*/
-
-/**
- *
- * @returns true if the video is playing, false if it is paused, null if the request failed
- */
-/*async function requestPlayingState(): Promise<boolean | null> {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ message: "get_playing_state" }, (response) => {
-      if (response && response.message === "playing_state") {
-        clearTimeout(timeoutId);
-        const playingState: boolean = response.playingState;
-        resolve(playingState);
-      } else {
-        console.error(
-          "Failed to get playing state: invalid response",
-          response
-        );
-        resolve(null);
-      }
-    });
-
-    // make promise expire after not receiving a response for 5 seconds
-    const timeoutId = setTimeout(() => {
-      console.error("Failed to get playing state: promise timed out");
-      resolve(null);
-    }, 5000);
-  });
-}*/
 
 function updateAnimations(): void {
   const videoTitles: NodeListOf<HTMLSpanElement> =
@@ -190,6 +112,10 @@ function updateTimer(): void {
   const timerElement: HTMLElement | null = document.getElementById("time");
   if (timerElement) {
     timerElement.textContent = formatTime(timer);
+  }
+  const watchtimeTotalElement: HTMLElement | null = document.getElementById("total-time");
+  if (watchtimeTotalElement) {
+    watchtimeTotalElement.textContent = formatTime(watchtimeTotal);
   }
 }
 

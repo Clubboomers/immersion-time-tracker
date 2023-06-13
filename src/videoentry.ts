@@ -72,6 +72,7 @@ export class VideoEntry {
   }
 
   public getDurationWatched(): number {
+    this.updateDurationWatched();
     return this.durationWatched;
   }
 

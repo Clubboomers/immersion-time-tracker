@@ -81,11 +81,13 @@ export class VideoTracker {
         let watchtimeToday: number = this.timeTracker.getWatchTimeMillis(
           now.getHours() + now.getMinutes() / 60
         ); // hours since midnight
+        let watchtimeTotal: number = this.timeTracker.getTotalTimeWatched();
         const playingState: boolean = this.playingVideos.length > 0;
         sendResponse({
           message: "popup_info",
           recentActivity: recentActivity,
           watchtimeToday: watchtimeToday,
+          watchtimeTotal: watchtimeTotal,
           playingState: playingState,
         });
       }
@@ -163,6 +165,7 @@ export class VideoTracker {
             this.timeTracker
               .getVideoEntryByUrl(videoInformation.url)
               ?.setLastTimeEntryEndTime(new Date());
+              this.timeTracker.updateTotalTimeWatched();
 
             // remove video from playingVideos
             this.playingVideos = this.playingVideos.filter(

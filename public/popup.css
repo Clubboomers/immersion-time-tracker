@@ -45,9 +45,18 @@ h2 {
   margin-bottom: 10px;
 }
 
+h3 {
+  font-size: 14px;
+}
+
 #time {
   font-size: 3rem;
   color: #f24150;
+}
+
+#total-time {
+  font-size: 1.5rem;
+  color: #777777;
 }
 
 #activity h2 {
