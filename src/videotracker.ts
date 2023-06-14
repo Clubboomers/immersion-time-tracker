@@ -13,7 +13,6 @@ export class VideoTracker {
   timeTracker: TimeTracker;
   activeTabs: { id: number; url: string }[] = []; // tabs with videos playing
   playingVideos: { url: string; videoName: string | null }[] = []; // videos that are playing
-  targetLanguage: string | null = "ja";
 
   constructor() {
     this.timeTracker = TimeTracker.getInstance(
@@ -104,7 +103,7 @@ export class VideoTracker {
         this.trackingOptions = new Options(request.options);
         this.trackingOptions.saveOptions();
         sendResponse({
-          message: "options_saved"
+          message: "options_saved",
         });
       }
     });
@@ -125,6 +124,16 @@ export class VideoTracker {
     this.timeTracker.getLastTimeEntry()?.setEndTime(new Date());
   }
 
+  private langMatchesOptions(
+    result: chrome.i18n.LanguageDetectionResult, videoName: string | null
+  ): boolean {
+    if (!this.trackingOptions.getTargetLangSet()) return true;
+    if (!videoName) return true;
+    return (
+      result.languages[0].language === this.trackingOptions.getTargetLanguage()
+    );
+  }
+
   private handleUpdate(
     videoName: string | null,
     url: string,
@@ -133,52 +142,68 @@ export class VideoTracker {
   ): void {
     console.log("handling update");
     console.log("isPlaying: " + isPlaying);
+
     const videoInformation = { videoName, url };
+
     chrome.i18n.detectLanguage(videoName + "", (result) => {
       console.log(result);
+
+      if (!this.langMatchesOptions(result, videoName)) return; // if video language doesn't match target language, ignore
+
       switch (isPlaying) {
         case true:
-          if (result.languages[0].language === this.targetLanguage) {
-            console.log("video is playing");
-            this.timeTracker.addVideoEntryByUrl(url, videoName, new Date());
-            this.playingVideos.push(videoInformation);
-            console.log("playing videos: " + this.playingVideos.length);
-            if (tabId) this.activeTabs.push({ id: tabId, url: url });
-            break;
-          }
+          this.videoPlaying(videoInformation, tabId);
+          break;
         case false:
-          if (result.languages[0].language === this.targetLanguage) {
-            console.log("video is not playing");
-            // find video in playingVideos
-            const stoppedVideoEntry = this.playingVideos.find(
-              (video: { url: string }) => {
-                return video.url === videoInformation.url;
-              }
-            );
-            if (!stoppedVideoEntry) {
-              /*console.error(
-              `Expected to find video entry with url ${videoInformation.url} in playingVideos list`
-            );*/
-              return;
-            }
-            // add end time to video entry
-            this.timeTracker
-              .getVideoEntryByUrl(videoInformation.url)
-              ?.setLastTimeEntryEndTime(new Date());
-              this.timeTracker.updateTotalTimeWatched();
-
-            // remove video from playingVideos
-            this.playingVideos = this.playingVideos.filter(
-              (video: { url: string }) => {
-                return video.url !== videoInformation.url;
-              }
-            );
-            if (tabId) this.removeFromActiveTabs(tabId);
-            break;
-          }
+          this.videoNotPlaying(videoInformation, tabId);
+          break;
       }
     });
+
     saveManager.saveTimeTracker(this.timeTracker);
+  }
+
+  private videoPlaying(
+    videoInformation: { videoName: string | null; url: string },
+    tabId: number | undefined
+  ) {
+    console.log("video is playing");
+    this.timeTracker.addVideoEntryByUrl(
+      videoInformation.url,
+      videoInformation.videoName,
+      new Date()
+    );
+    this.playingVideos.push(videoInformation);
+    console.log("playing videos: " + this.playingVideos.length);
+    if (tabId) this.activeTabs.push({ id: tabId, url: videoInformation.url });
+  }
+
+  private videoNotPlaying(
+    videoInformation: { videoName: string | null; url: string },
+    tabId: number | undefined
+  ) {
+    console.log("video is not playing");
+    // find video in playingVideos
+    const stoppedVideoEntry = this.playingVideos.find(
+      (video: { url: string }) => {
+        return video.url === videoInformation.url;
+      }
+    );
+    if (!stoppedVideoEntry) {
+      return;
+    }
+    // add end time to video entry
+    this.timeTracker
+      .getVideoEntryByUrl(videoInformation.url)
+      ?.setLastTimeEntryEndTime(new Date());
+    this.timeTracker.updateTotalTimeWatched();
+
+    // remove video from playingVideos
+    this.playingVideos = this.playingVideos.filter((video: { url: string }) => {
+      return video.url !== videoInformation.url;
+    });
+    if (tabId) this.removeFromActiveTabs(tabId);
+    else console.error("tabId is undefined");
   }
 
   /**

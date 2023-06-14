@@ -1,26 +1,3 @@
-let timer: number;
-let watchtimeTotal: number;
-let timerActive: boolean = false;
-let recentActivity: {
-  listItem?: HTMLLIElement;
-  date?: Date;
-  url: string;
-  title: string;
-}[] = [];
-init();
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  // listen for messages sent from background.js
-  if (request.message === "playing_state") {
-    const playingState = request.playingState;
-    if (playingState) {
-      startTimer();
-    } else {
-      stopTimer();
-    }
-  }
-});
-
 /**
  * 
  * @returns 
@@ -194,3 +171,39 @@ function getImgSrcByUrl(url: string): string {
   }
   return "";
 }
+
+function extractDomain(url: string): string {
+  try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.hostname;
+  } catch (error) {
+      console.error(`Invalid URL: ${url}`);
+      return '';
+  }
+}
+
+/* */
+
+let timer: number;
+let watchtimeTotal: number;
+let timerActive: boolean = false;
+let recentActivity: {
+  listItem?: HTMLLIElement;
+  date?: Date;
+  url: string;
+  title: string;
+}[] = [];
+init();
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  
+  // listen for messages sent from background.js
+  if (request.message === "playing_state") {
+    const playingState = request.playingState;
+    if (playingState) {
+      startTimer();
+    } else {
+      stopTimer();
+    }
+  }
+});

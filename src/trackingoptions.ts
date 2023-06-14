@@ -1,15 +1,15 @@
 export class Options {
-  private prefLangEnabled: boolean = true;
+  private targetLangSet: boolean = true;
   private targetLanguage: string = "ja";
   private domainsToTrack: { [key: string]: boolean } = {};
   private domainsToAlwaysTrack: string[] = [];
   private blacklistedKeywords: string[] = [];
   constructor(obj?: any) {
-    this.domainsToTrack["youtube.com"] = true;
-    this.domainsToTrack["netflix.com"] = true;
-    this.domainsToTrack["nicovideo.jp"] = true;
+    this.domainsToTrack["www.youtube.com"] = true;
+    this.domainsToTrack["www.netflix.com"] = true;
+    this.domainsToTrack["www.nicovideo.jp"] = true;
     if (obj) {
-      this.prefLangEnabled = obj.prefLangEnabled;
+      this.targetLangSet = obj.targetLangSet;
       this.targetLanguage = obj.targetLanguage;
       this.domainsToTrack = obj.domainsToTrack;
       this.domainsToAlwaysTrack = obj.domainsToAlwaysTrack;
@@ -22,7 +22,7 @@ export class Options {
   public loadOptions(): void {
     chrome.storage.sync.get(
       [
-        "prefLangEnabled",
+        "targetLangSet",
         "targetLanguage",
         "domainsToTrack",
         "domainsToAlwaysTrack",
@@ -35,7 +35,7 @@ export class Options {
           return;
         }
 
-        this.prefLangEnabled = result.prefLangEnabled;
+        this.targetLangSet = result.targetLangSet;
         this.targetLanguage = result.targetLanguage;
         this.domainsToTrack = result.domainsToTrack;
         this.domainsToAlwaysTrack = result.domainsToAlwaysTrack;
@@ -46,7 +46,7 @@ export class Options {
 
   public saveOptions(): void {
     chrome.storage.sync.set({
-      prefLangEnabled: this.prefLangEnabled,
+      targetLangSet: this.targetLangSet,
       targetLanguage: this.targetLanguage,
       domainsToTrack: this.domainsToTrack,
       domainsToAlwaysTrack: this.domainsToAlwaysTrack,
@@ -54,8 +54,8 @@ export class Options {
     });
   }
 
-  public getPrefLangEnabled(): boolean {
-    return this.prefLangEnabled;
+  public getTargetLangSet(): boolean {
+    return this.targetLangSet;
   }
 
   public getTargetLanguage(): string {
@@ -74,8 +74,8 @@ export class Options {
     return this.blacklistedKeywords;
   }
 
-  public setPrefLangEnabled(prefLangEnabled: boolean): void {
-    this.prefLangEnabled = prefLangEnabled;
+  public setTargetLangSet(prefLangEnabled: boolean): void {
+    this.targetLangSet = prefLangEnabled;
   }
 
   public setTargetLanguage(targetLanguage: string): void {

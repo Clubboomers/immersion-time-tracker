@@ -5,7 +5,6 @@ module.exports = {
    devtool: "inline-source-map",
    entry: {
       background: path.resolve(__dirname, "..", "src", "background.ts"),
-      video: path.resolve(__dirname, "..", "src", "video.ts"),
       timetracker: path.resolve(__dirname, "..", "src", "timetracker.ts"),
       videoentry: path.resolve(__dirname, "..", "src", "videoentry.ts"),
       timeentry: path.resolve(__dirname, "..", "src", "timeentry.ts"),

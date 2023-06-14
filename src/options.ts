@@ -64,7 +64,7 @@ function saveOptions(): void {
       blacklistedKeywords,
     });
 
-    options.setPrefLangEnabled(prefLangEnabled);
+    options.setTargetLangSet(prefLangEnabled);
     options.setTargetLanguage(prefLang);
     options.setDomainsToTrack(domainsToTrack);
     options.setDomainsToAlwaysTrack(domainsToAlwaysTrack);
@@ -80,18 +80,11 @@ function saveOptions(): void {
     return;
   }
 
-  chrome.runtime.sendMessage(
-    { message: "set_options", options: options },
-    (response) => {
-      if (response && response.message == "options_saved") {
-        window.location.reload();
-      }
-    }
-  );
+  chrome.runtime.sendMessage({ message: "set_options", options: options });
 }
 
 function validOptions(options: Options): { isValid: boolean; fault: string } {
-  if (options.getPrefLangEnabled() && options.getTargetLanguage() === "") {
+  if (options.getTargetLangSet() && options.getTargetLanguage() === "") {
     return {
       isValid: false,
       fault: "Preferred language is enabled but no language is selected.",
@@ -108,6 +101,19 @@ function validOptions(options: Options): { isValid: boolean; fault: string } {
   return { isValid: true, fault: "" };
 }
 
+function extractDomain(url: string): string {
+  if (!url.startsWith("http")) {
+    url = "https://" + url;
+  }
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname;
+  } catch (error) {
+    console.error(`Invalid URL: ${url}`);
+    return "";
+  }
+}
+
 async function getOptions(): Promise<{ options: Options }> {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({ message: "get_options" }, (response) => {
@@ -116,7 +122,7 @@ async function getOptions(): Promise<{ options: Options }> {
         clearTimeout(timeoutId);
 
         const options: Options = new Options();
-        options.setPrefLangEnabled(response.options.prefLangEnabled);
+        options.setTargetLangSet(response.options.targetLangSet);
         options.setTargetLanguage(response.options.targetLanguage);
         options.setDomainsToTrack(response.options.domainsToTrack);
         options.setDomainsToAlwaysTrack(response.options.domainsToAlwaysTrack);
@@ -137,7 +143,7 @@ async function getOptions(): Promise<{ options: Options }> {
  * @param options Options object to load into the options page
  */
 function loadOptions(options: Options): void {
-  prefLangSwitch!.checked = options.getPrefLangEnabled();
+  prefLangSwitch!.checked = options.getTargetLangSet();
   togglePrefLangEnabled();
 
   dropdown!.value = options.getTargetLanguage();
@@ -174,6 +180,9 @@ function loadOptions(options: Options): void {
   console.log("options loaded", options);
 }
 
+/**
+ * Hide or show the preferred language dropdown based on the preferred language switch
+ */
 function togglePrefLangEnabled(): void {
   const prefLangEnabled: boolean = prefLangSwitch?.checked ?? false;
   const dropdown: HTMLSelectElement | null = document.querySelector(
@@ -187,6 +196,10 @@ function togglePrefLangEnabled(): void {
     dropdown.required = false;
   }
 }
+
+//
+// main
+//
 
 const prefLangSwitch: HTMLInputElement | null =
   document.querySelector("#prefLangEnabled");
@@ -205,129 +218,7 @@ if (!dropdown) {
   throw new Error("Could not find preferred language dropdown.");
 }
 
-const supportedLanguages = [
-  { value: "af", text: "Afrikaans" },
-  { value: "am", text: "Amharic" },
-  { value: "ar", text: "Arabic" },
-  { value: "bg", text: "Bulgarian" },
-  { value: "bn", text: "Bangla" },
-  { value: "bs", text: "Bosnian" },
-  { value: "ca", text: "Catalan" },
-  { value: "ceb", text: "Cebuano" },
-  { value: "co", text: "Corsican" },
-  { value: "cs", text: "Czech" },
-  { value: "cy", text: "Welsh" },
-  { value: "da", text: "Danish" },
-  { value: "de", text: "German" },
-  { value: "el", text: "Greek" },
-  { value: "en", text: "English" },
-  { value: "eo", text: "Esperanto" },
-  { value: "es", text: "Spanish" },
-  { value: "et", text: "Estonian" },
-  { value: "eu", text: "Basque" },
-  { value: "fa", text: "Persian" },
-  { value: "fi", text: "Finnish" },
-  { value: "fil", text: "Filipino" },
-  { value: "fr", text: "French" },
-  { value: "fy", text: "Western Frisian" },
-  { value: "ga", text: "Irish" },
-  { value: "gd", text: "Scottish Gaelic" },
-  { value: "gl", text: "Galician" },
-  { value: "gu", text: "Gujarati" },
-  { value: "ha", text: "Hausa" },
-  { value: "haw", text: "Hawaiian" },
-  { value: "hi", text: "Hindi" },
-  { value: "hmn", text: "Hmong" },
-  { value: "hr", text: "Croatian" },
-  { value: "ht", text: "Haitian Creole" },
-  { value: "hu", text: "Hungarian" },
-  { value: "hy", text: "Armenian" },
-  { value: "id", text: "Indonesian" },
-  { value: "ig", text: "Igbo" },
-  { value: "is", text: "Icelandic" },
-  { value: "it", text: "Italian" },
-  { value: "iw", text: "Hebrew" },
-  { value: "ja", text: "Japanese" },
-  { value: "jv", text: "Javanese" },
-  { value: "ka", text: "Georgian" },
-  { value: "kk", text: "Kazakh" },
-  { value: "km", text: "Khmer" },
-  { value: "kn", text: "Kannada" },
-  { value: "ko", text: "Korean" },
-  { value: "ku", text: "Kurdish" },
-  { value: "ky", text: "Kyrgyz" },
-  { value: "la", text: "Latin" },
-  { value: "lb", text: "Luxembourgish" },
-  { value: "lo", text: "Lao" },
-  { value: "lt", text: "Lithuanian" },
-  { value: "lv", text: "Latvian" },
-  { value: "mg", text: "Malagasy" },
-  { value: "mi", text: "Maori" },
-  { value: "mk", text: "Macedonian" },
-  { value: "ml", text: "Malayalam" },
-  { value: "mn", text: "Mongolian" },
-  { value: "mr", text: "Marathi" },
-  { value: "ms", text: "Malay" },
-  { value: "mt", text: "Maltese" },
-  { value: "my", text: "Burmese" },
-  { value: "ne", text: "Nepali" },
-  { value: "nl", text: "Dutch" },
-  { value: "no", text: "Norwegian" },
-  { value: "ny", text: "Nyanja" },
-  { value: "pa", text: "Punjabi" },
-  { value: "pl", text: "Polish" },
-  { value: "ps", text: "Pashto" },
-  { value: "pt", text: "Portuguese" },
-  { value: "ro", text: "Romanian" },
-  { value: "ru", text: "Russian" },
-  { value: "sd", text: "Sindhi" },
-  { value: "si", text: "Sinhala" },
-  { value: "sk", text: "Slovak" },
-  { value: "sl", text: "Slovenian" },
-  { value: "sm", text: "Samoan" },
-  { value: "sn", text: "Shona" },
-  { value: "so", text: "Somali" },
-  { value: "sq", text: "Albanian" },
-  { value: "sr", text: "Serbian" },
-  { value: "st", text: "Southern Sotho" },
-  { value: "su", text: "Sundanese" },
-  { value: "sv", text: "Swedish" },
-  { value: "sw", text: "Swahili" },
-  { value: "ta", text: "Tamil" },
-  { value: "te", text: "Telugu" },
-  { value: "tg", text: "Tajik" },
-  { value: "th", text: "Thai" },
-  { value: "tr", text: "Turkish" },
-  { value: "uk", text: "Ukrainian" },
-  { value: "ur", text: "Urdu" },
-  { value: "uz", text: "Uzbek" },
-  { value: "vi", text: "Vietnamese" },
-  { value: "xh", text: "Xhosa" },
-  { value: "yi", text: "Yiddish" },
-  { value: "yo", text: "Yoruba" },
-  { value: "zh", text: "Chinese" },
-  { value: "zu", text: "Zulu" },
-];
-
-// sort alphabetically by text field
-supportedLanguages.sort((a, b) => {
-  const textA = a.text.toUpperCase();
-  const textB = b.text.toUpperCase();
-  return textA < textB ? -1 : textA > textB ? 1 : 0;
-});
-
 window.onload = () => {
-  if (dropdown) {
-    supportedLanguages.forEach((language) => {
-      const optionElement = document.createElement("option");
-      optionElement.value = language.value;
-      optionElement.text = language.text;
-      dropdown.appendChild(optionElement);
-    });
-  } else {
-    throw new Error("Could not find preferred language dropdown.");
-  }
-
   togglePrefLangEnabled();
   prefLangSwitch.addEventListener("change", () => {
     togglePrefLangEnabled();
@@ -335,7 +226,7 @@ window.onload = () => {
 
   const addToListButtons: {
     parentElement: HTMLDivElement;
-    childElement: HTMLButtonElement;
+    buttonElement: HTMLButtonElement;
   }[] = [];
   // populate addToListButtons array
   document.querySelectorAll("#addToList").forEach((button) => {
@@ -345,14 +236,17 @@ window.onload = () => {
     ) as HTMLInputElement;
     const childElement = button as HTMLButtonElement;
     childElement.addEventListener("click", () => {
-      const text: string = textField.value.trim();
+      let text: string = textField.value.trim();
+      if (parentElement.id === "domainsToAlwaysTrack") {
+        text = extractDomain(text);
+      }
       if (text === "") {
         return;
       }
       addElementToList(parentElement, text);
       textField.value = "";
     });
-    addToListButtons.push({ parentElement, childElement });
+    addToListButtons.push({ parentElement, buttonElement: childElement });
   });
 
   /**
