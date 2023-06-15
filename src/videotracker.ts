@@ -129,6 +129,10 @@ export class VideoTracker {
   ): boolean {
     if (!this.trackingOptions.getTargetLangSet()) return true;
     if (!videoName) return true;
+    if (this.trackingOptions.getBlacklistedKeywords().some(keyword => videoName.includes(keyword))) {
+      console.log("blacklisted keyword found in video name");
+      return false;
+    }
     return (
       result.languages[0].language === this.trackingOptions.getTargetLanguage()
     );
