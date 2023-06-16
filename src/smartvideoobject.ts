@@ -5,12 +5,13 @@ export class SmartVideoObject {
   private videoIsPlaying: boolean | undefined = false;
   private videoHasListeners: boolean = false;
   private hasPlayed: boolean = false;
+  private playingStateTrueSent: boolean = false;
   public static idCounter: number = 0;
   public id: number;
   constructor(
     video?: HTMLVideoElement,
     url?: string,
-    videoTitle?: string | null,
+    videoTitle?: string | null
   ) {
     this.url = url || "";
     this.videoTitle = videoTitle || null;
@@ -20,14 +21,16 @@ export class SmartVideoObject {
 
   public reportToBackground(): void {
     if (!this.hasPlayed) return; // don't send update if video hasn't played yet
+    if (this.videoIsPlaying && this.playingStateTrueSent) return; // don't send update if video is playing and playing state true has already been sent
     console.log("sending update to background");
     chrome.runtime.sendMessage({
       message: "update",
       title: this.videoTitle,
       url: this.url,
       isPlaying: JSON.stringify(!this.video!.paused),
+      id: this.id,
     });
-    console.log("sent message to background");
+    if (this.videoIsPlaying) this.playingStateTrueSent = true;
   }
 
   public setVideo(video: HTMLVideoElement): void {
@@ -42,7 +45,6 @@ export class SmartVideoObject {
     this.video = null;
     this.videoIsPlaying = false;
     if (this.videoHasListeners) {
-      this.removeListeners();
       this.videoHasListeners = false;
     }
   }
@@ -51,7 +53,7 @@ export class SmartVideoObject {
     this.hasPlayed = false;
     this.videoHasListeners = false;
     this.videoTitle = null;
-    this.videoIsPlaying = undefined;
+    this.videoIsPlaying = false;
   }
 
   public addListeners(): void {
@@ -66,27 +68,11 @@ export class SmartVideoObject {
         if (this.videoIsPlaying) return; // prevent double counting
         this.videoIsPlaying = true;
         this.hasPlayed = true;
+        this.playingStateTrueSent = false;
         console.log("video played");
         this.reportToBackground();
       });
       this.videoHasListeners = true;
-      return;
-    }
-  }
-
-  public removeListeners(): void {
-    if (this.videoHasListeners && this.video) {
-      this.video.removeEventListener("pause", () => {
-        this.videoIsPlaying = false;
-        console.log("video paused");
-        this.reportToBackground();
-      });
-      this.video.removeEventListener("play", () => {
-        this.videoIsPlaying = true;
-        console.log("video played");
-        this.reportToBackground();
-      });
-      this.videoHasListeners = false;
       return;
     }
   }
@@ -100,10 +86,14 @@ export class SmartVideoObject {
   public isPlaying(): boolean {
     if (!this.video) return false;
     if (this.video) {
-      console.log("video is playing: " + !this.video.paused);
       return !this.video.paused && document.visibilityState === "visible";
     }
     return false;
+  }
+
+  public updatePlayingState(): boolean {
+    this.videoIsPlaying = this.isPlaying();
+    return this.videoIsPlaying;
   }
 
   public initializeVideo(): void {}

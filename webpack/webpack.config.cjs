@@ -11,6 +11,7 @@ module.exports = {
       popup: path.resolve(__dirname, "..", "src", "popup.ts"),
       youtube: path.resolve(__dirname, "..", "src", "youtube.ts"),
       options: path.resolve(__dirname, "..", "src", "options.ts"),
+      //websiteutils: path.resolve(__dirname, "..", "src/contentscripts/utility", "websiteutils.ts"),
    },
    output: {
       path: path.join(__dirname, "../dist"),

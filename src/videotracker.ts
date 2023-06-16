@@ -12,7 +12,7 @@ export class VideoTracker {
   trackingOptions: Options = new Options();
   timeTracker: TimeTracker;
   activeTabs: { id: number; url: string }[] = []; // tabs with videos playing
-  playingVideos: { url: string; videoName: string | null }[] = []; // videos that are playing
+  playingVideos: { url: string; videoName: string | null, videoId: string }[] = []; // videos that are playing
 
   constructor() {
     this.timeTracker = TimeTracker.getInstance(
@@ -68,8 +68,9 @@ export class VideoTracker {
         const title = request.title;
         const url = request.url;
         const isPlaying = JSON.parse(request.isPlaying);
+        const videoId = request.id;
         if (url) {
-          this.handleUpdate(title, url, isPlaying, sender.tab?.id);
+          this.handleUpdate(title, url, isPlaying, sender.tab?.id, videoId);
         }
       }
 
@@ -142,12 +143,18 @@ export class VideoTracker {
     videoName: string | null,
     url: string,
     isPlaying: boolean,
-    tabId: number | undefined
+    tabId: number | undefined,
+    videoId: string
   ): void {
     console.log("handling update");
     console.log("isPlaying: " + isPlaying);
 
-    const videoInformation = { videoName, url };
+    const videoInformation = { videoName, url, videoId };
+
+    if (isPlaying && this.playingVideos.some((video) => video.videoId === videoId)) {
+      console.log("video is already playing");
+      return;
+    }
 
     chrome.i18n.detectLanguage(videoName + "", (result) => {
       console.log(result);
@@ -168,7 +175,7 @@ export class VideoTracker {
   }
 
   private videoPlaying(
-    videoInformation: { videoName: string | null; url: string },
+    videoInformation: { videoName: string | null; url: string, videoId: string },
     tabId: number | undefined
   ) {
     console.log("video is playing");
@@ -183,7 +190,7 @@ export class VideoTracker {
   }
 
   private videoNotPlaying(
-    videoInformation: { videoName: string | null; url: string },
+    videoInformation: { videoName: string | null; url: string, videoId: string },
     tabId: number | undefined
   ) {
     console.log("video is not playing");

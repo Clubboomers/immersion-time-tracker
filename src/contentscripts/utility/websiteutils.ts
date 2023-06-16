@@ -1,7 +1,6 @@
 import { SmartVideoObject } from "../../smartvideoobject";
 
 function utilityFunctions() {
-
   async function getVideoTitleYoutube(): Promise<string | null> {
     let titleQuery: string = "h1.ytd-watch-metadata > yt-formatted-string";
 
@@ -132,25 +131,31 @@ function utilityFunctions() {
         console.log("YouTube's videoId is null");
         videoUrl = "https://www.youtube.com/";
       }
+      videoObject.setUrl(videoUrl);
       videoObject.updateVideoState();
       videoObject.reportToBackground();
       videoObject.addListeners();
       return;
     }
-
     console.log("is not miniplayer video element");
-    // video preview on homepage
+
+    // video is not miniplayer video element
+    // video preview on homepage:
     // mediaLinkContainer is an <a> tag that contains the video title and url for preview videos on the homepage
-    const mediaLinkContainer: HTMLAnchorElement | null = document.querySelector(
+    /* const mediaLinkContainer: HTMLAnchorElement | null = document.querySelector(
       "a#media-container-link"
     );
+    console.log("mediaLinkContainer: ", mediaLinkContainer);
+    console.log(videoObject.getVideo());
     if (!mediaLinkContainer) {
       throw new Error("YouTube's mediaLinkContainer is null");
-    }
-    const videoUrl: string | null = processUrl(mediaLinkContainer.href);
-    videoObject.setVideoTitle(
+    } */
+    const videoUrl: string | null = thisUrl;
+    /* videoObject.setVideoTitle(
       mediaLinkContainer.getAttribute("aria-label") ?? null
-    );
+    ); */
+    videoObject.setUrl(videoUrl);
+    videoObject.setVideoTitle(null);
     if (!videoUrl) {
       throw new Error("YouTube's mediaLinkContainer's href is null");
     }
@@ -181,7 +186,10 @@ function utilityFunctions() {
    * Watches the video element for any changes to the src attribute or if it is removed from the DOM
    * @param videoElement
    */
-  function watchVideoElement(thisUrl: string, videoObject: SmartVideoObject) {
+  function watchVideoElement(
+    thisUrl: string,
+    videoObject: SmartVideoObject
+  ): void {
     const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
       for (const mutation of mutationsList) {
         // If the mutated element was removed from the DOM or the `src` attribute was removed
@@ -197,10 +205,6 @@ function utilityFunctions() {
           videoObject.reportToBackground();
 
           observer.disconnect(); // Stop watching for changes
-
-          // Try to find a new video element
-          findVideoElements(thisUrl);
-          return;
         }
       }
     });
@@ -218,23 +222,17 @@ function utilityFunctions() {
    * every second until it finds one.
    * @returns video element with a src attribute or null if url changes while searching
    */
-  async function tryForVideoElementsLoop(
-    firstUrl: string,
-    currentUrl?: string
-  ): Promise<HTMLVideoElement[] | null> {
+  function findVideoElements(
+    smartVideoObjects: SmartVideoObject[]
+  ): HTMLVideoElement[] {
     chrome.runtime.sendMessage({ message: "looking for video element..." });
-    if (!currentUrl) {
-      currentUrl = firstUrl;
-    }
-    if (currentUrl !== firstUrl) {
-      return null;
-    }
     let videoElements: HTMLVideoElement[] = [];
 
     // check for <video> elements with src attributes
     document.querySelectorAll("video").forEach((videoElement) => {
       if (videoElement.hasAttribute("src") || !videoElement.paused) {
         videoElements.push(videoElement);
+        console.log("found video element");
       }
     });
     // check for <video> elements inside <iframe> elements with src attributes
@@ -244,35 +242,12 @@ function utilityFunctions() {
         .forEach((videoElement) => {
           if (videoElement.hasAttribute("src") || !videoElement.paused) {
             videoElements.push(videoElement);
+            console.log("found video element inside iframe");
           }
         });
     });
 
-    if (videoElements.length > 0) {
-      return videoElements;
-    }
-
-    // delay before recursive call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    return tryForVideoElementsLoop(firstUrl, currentUrl);
-  }
-
-  function findVideoElements(thisUrl: string): SmartVideoObject[] {
-    const videoObjects: SmartVideoObject[] = [];
-    tryForVideoElementsLoop(thisUrl).then((videoElements) => {
-      if (videoElements && videoElements.length > 0) {
-        console.log("video element found");
-        videoElements.forEach((videoElement) => {
-          const videoObject = new SmartVideoObject(videoElement);
-          videoObjects.push(videoObject);
-          initVideo(thisUrl, videoObject);
-        });
-      } else {
-        console.log("video element not found");
-      }
-    });
-    return videoObjects;
+    return videoElements;
   }
 
   async function initVideo(
@@ -316,10 +291,28 @@ function utilityFunctions() {
       });
     }
     if (videoObject.getVideo()) {
-      videoObject.updateVideoState();
+      videoObject.setUrl(thisUrl);
+      videoObject.updateVideoState(); // set playing state, hasPlayed, and videoIsPlaying
       videoObject.reportToBackground();
       videoObject.addListeners();
     }
+  }
+
+  function extractDomain(url: string): string {
+    if (!url.startsWith("http")) {
+      url = "https://" + url;
+    }
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.hostname;
+    } catch (error) {
+      console.error(`Invalid URL: ${url}`);
+      return "";
+    }
+  }
+
+  function htmlVideoExistsOnPage(videoElement: HTMLVideoElement): boolean {
+    return document.contains(videoElement);
   }
 
   return {
@@ -327,13 +320,14 @@ function utilityFunctions() {
     getVideoTitleNetflix,
     getVideoTitleNico,
     initVideo,
-    findVideoElements,
     processUrl,
-    tryForVideoElementsLoop,
+    findVideoElements,
     getVideoKey,
     initYoutubeHomepage,
     watchVideoElement,
-  }
+    extractDomain,
+    htmlVideoExistsOnPage,
+  };
 }
 
 const websiteUtils = utilityFunctions();
