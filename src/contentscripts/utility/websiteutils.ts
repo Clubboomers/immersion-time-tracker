@@ -162,7 +162,6 @@ function utilityFunctions() {
     videoObject.updateVideoState();
     videoObject.reportToBackground();
     videoObject.addListeners();
-    watchVideoElement(thisUrl, videoObject);
   }
 
   /**
@@ -186,10 +185,10 @@ function utilityFunctions() {
    * Watches the video element for any changes to the src attribute or if it is removed from the DOM
    * @param videoElement
    */
-  function watchVideoElement(
-    thisUrl: string,
-    videoObject: SmartVideoObject
-  ): void {
+  function watchVideoElement(videoObject: SmartVideoObject): void {
+    const videoElement = videoObject.getVideo();
+    if (!videoElement)
+      throw new Error("videoElement is null in watchVideoElement");
     const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
       for (const mutation of mutationsList) {
         // If the mutated element was removed from the DOM or the `src` attribute was removed
@@ -200,7 +199,9 @@ function utilityFunctions() {
           console.log("Video element or src attribute has been removed");
 
           // Code to be executed...
-          videoObject.setVideoTitle(null);
+          /* videoObject.setVideoTitle(null);
+          videoObject.setVideoIsPlaying(false); */
+          videoObject.removeListeners();
           videoObject.setVideoIsPlaying(false);
           videoObject.reportToBackground();
 
@@ -208,13 +209,12 @@ function utilityFunctions() {
         }
       }
     });
-
-    /*  // Start observing the videoElement for attribute and childList changes
+    // Start observing the videoElement for attribute and childList changes
     observer.observe(videoElement, {
       attributes: true,
       childList: true,
       subtree: true,
-    }); */
+    });
   }
 
   /**
@@ -222,9 +222,7 @@ function utilityFunctions() {
    * every second until it finds one.
    * @returns video element with a src attribute or null if url changes while searching
    */
-  function findVideoElements(
-    smartVideoObjects: SmartVideoObject[]
-  ): HTMLVideoElement[] {
+  function findVideoElements(): HTMLVideoElement[] {
     chrome.runtime.sendMessage({ message: "looking for video element..." });
     let videoElements: HTMLVideoElement[] = [];
 
@@ -295,6 +293,7 @@ function utilityFunctions() {
       videoObject.updateVideoState(); // set playing state, hasPlayed, and videoIsPlaying
       videoObject.reportToBackground();
       videoObject.addListeners();
+      watchVideoElement(videoObject);
     }
   }
 

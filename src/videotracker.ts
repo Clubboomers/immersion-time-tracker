@@ -12,7 +12,8 @@ export class VideoTracker {
   trackingOptions: Options = new Options();
   timeTracker: TimeTracker;
   activeTabs: { id: number; url: string }[] = []; // tabs with videos playing
-  playingVideos: { url: string; videoName: string | null, videoId: string }[] = []; // videos that are playing
+  playingVideos: { url: string; videoName: string | null; videoId: string }[] =
+    []; // videos that are playing
 
   constructor() {
     this.timeTracker = TimeTracker.getInstance(
@@ -78,9 +79,7 @@ export class VideoTracker {
         const recentActivity: { url: string; title: string }[] =
           this.timeTracker.getRecentActivity();
         let now = new Date();
-        let watchtimeToday: number = this.timeTracker.getWatchTimeMillis(
-          now.getHours() + now.getMinutes() / 60
-        ); // hours since midnight
+        let watchtimeToday: number = this.timeTracker.getTimeWatchedByPeriod(60*60*24);
         let watchtimeTotal: number = this.timeTracker.getTotalTimeWatched();
         const playingState: boolean = this.playingVideos.length > 0;
         sendResponse({
@@ -126,11 +125,16 @@ export class VideoTracker {
   }
 
   private langMatchesOptions(
-    result: chrome.i18n.LanguageDetectionResult, videoName: string | null
+    result: chrome.i18n.LanguageDetectionResult,
+    videoName: string | null
   ): boolean {
     if (!this.trackingOptions.getTargetLangSet()) return true;
     if (!videoName) return true;
-    if (this.trackingOptions.getBlacklistedKeywords().some(keyword => videoName.includes(keyword))) {
+    if (
+      this.trackingOptions
+        .getBlacklistedKeywords()
+        .some((keyword) => videoName.includes(keyword))
+    ) {
       console.log("blacklisted keyword found in video name");
       return false;
     }
@@ -151,7 +155,10 @@ export class VideoTracker {
 
     const videoInformation = { videoName, url, videoId };
 
-    if (isPlaying && this.playingVideos.some((video) => video.videoId === videoId)) {
+    if (
+      isPlaying &&
+      this.playingVideos.some((video) => video.videoId === videoId)
+    ) {
       console.log("video is already playing");
       return;
     }
@@ -160,6 +167,8 @@ export class VideoTracker {
       console.log(result);
 
       if (!this.langMatchesOptions(result, videoName)) return; // if video language doesn't match target language, ignore
+      if (!videoInformation.videoName)
+        videoInformation.videoName = videoInformation.url; // if video name is null, use url as name
 
       switch (isPlaying) {
         case true:
@@ -175,7 +184,11 @@ export class VideoTracker {
   }
 
   private videoPlaying(
-    videoInformation: { videoName: string | null; url: string, videoId: string },
+    videoInformation: {
+      videoName: string | null;
+      url: string;
+      videoId: string;
+    },
     tabId: number | undefined
   ) {
     console.log("video is playing");
@@ -190,7 +203,11 @@ export class VideoTracker {
   }
 
   private videoNotPlaying(
-    videoInformation: { videoName: string | null; url: string, videoId: string },
+    videoInformation: {
+      videoName: string | null;
+      url: string;
+      videoId: string;
+    },
     tabId: number | undefined
   ) {
     console.log("video is not playing");

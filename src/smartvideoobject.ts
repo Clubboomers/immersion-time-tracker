@@ -5,7 +5,6 @@ export class SmartVideoObject {
   private videoIsPlaying: boolean | undefined = false;
   private videoHasListeners: boolean = false;
   private hasPlayed: boolean = false;
-  private playingStateTrueSent: boolean = false;
   public static idCounter: number = 0;
   public id: number;
   constructor(
@@ -21,7 +20,6 @@ export class SmartVideoObject {
 
   public reportToBackground(): void {
     if (!this.hasPlayed) return; // don't send update if video hasn't played yet
-    if (this.videoIsPlaying && this.playingStateTrueSent) return; // don't send update if video is playing and playing state true has already been sent
     console.log("sending update to background");
     chrome.runtime.sendMessage({
       message: "update",
@@ -30,7 +28,6 @@ export class SmartVideoObject {
       isPlaying: JSON.stringify(!this.video!.paused),
       id: this.id,
     });
-    if (this.videoIsPlaying) this.playingStateTrueSent = true;
   }
 
   public setVideo(video: HTMLVideoElement): void {
@@ -68,11 +65,30 @@ export class SmartVideoObject {
         if (this.videoIsPlaying) return; // prevent double counting
         this.videoIsPlaying = true;
         this.hasPlayed = true;
-        this.playingStateTrueSent = false;
         console.log("video played");
         this.reportToBackground();
       });
       this.videoHasListeners = true;
+      return;
+    }
+  }
+
+  public removeListeners(): void {
+    if (this.videoHasListeners && this.video) {
+      this.video.removeEventListener("pause", () => {
+        if (!this.videoIsPlaying) return; // prevent double counting
+        this.videoIsPlaying = false;
+        console.log("video paused");
+        this.reportToBackground();
+      });
+      this.video.removeEventListener("play", () => {
+        if (this.videoIsPlaying) return; // prevent double counting
+        this.videoIsPlaying = true;
+        this.hasPlayed = true;
+        console.log("video played");
+        this.reportToBackground();
+      });
+      this.videoHasListeners = false;
       return;
     }
   }

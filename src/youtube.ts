@@ -105,31 +105,33 @@ chrome.runtime.sendMessage({ message: "get_options" }, (response) => {
       if (!validUrl) return; // if url is invalid, don't do anything
     } 
 
-    // check if videos are still on page
     videoObjects.forEach((video) => {
-      const htmlVideo = video.getVideo();
-      if (!htmlVideo || !websiteUtils.htmlVideoExistsOnPage(htmlVideo)) {
-        video.clearData();
-        video.reportToBackground();
+      if (!video.isPlaying()) {
         videoObjects = videoObjects.filter((videoObject) => {
           return videoObject !== video;
         });
       }
     });
 
-    // check if videos are still playing
-    videoObjects.forEach((video) => {
-      const playingState = video.getVideoIsPlaying();
-      if (playingState !== video.getVideoIsPlaying() && !video.getVideoIsPlaying()) {
-        video.reportToBackground();
-        videoObjects = videoObjects.filter((videoObject) => {
-          return videoObject !== video;
+    const videos = websiteUtils.findVideoElements();
+
+    // check if videos are still on page
+    videoObjects.forEach((videoObject) => {
+      if (!videoObject.getVideo()) {
+        videoObjects = videoObjects.filter((video) => {
+          return video !== videoObject;
+        });
+      }
+      else if (!videos.includes(videoObject.getVideo()!)) {
+        videoObject.clearVideo();
+        videoObject.reportToBackground();
+        videoObjects = videoObjects.filter((video) => {
+          return video !== videoObject;
         });
       }
     });
 
     // look for new videos on page
-    const videos = websiteUtils.findVideoElements(videoObjects);
     videos.forEach((video) => {
       if (!videoObjectsHasVideo(videoObjects, video)) {
         const videoObject = new SmartVideoObject(video);
