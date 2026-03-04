@@ -1,17 +1,20 @@
 # Immersion Time Tracker
 
-Tool to automatically track time you spend watching videos (immersing) on sites like YouTube, Netflix, etc. (No more manual tracking with Toggl!)
+Tool to automatically track time you spend watching videos (immersing) on sites like YouTube, Netflix, etc. (No more manual tracking with Toggl!).
+
+Works best for free-flow immersion. Support for active immersion, where the video is often paused for prolonged periods of time despite the user still immersing, will come in a future update.
 
 ## Installation
 
 ### Steps
 
 1. Download the latest release as a .zip file. 
-2. Extract to an empty folder.
-3. Navigate to your Chrome extensions.
+2. Unzip it in an empty directory of your choice.
+3. Navigate to your Chrome extensions ( chrome://extensions/ ).
 4. Enable "Developer mode" in the top right.
-5. Press "Load unpacked" in the top left and select the downloaded .zip file.
-6. Enjoy!
+5. Press "Load unpacked" in the top left and select the directory.
+6. Restart your browser.
+7. Enjoy!
 
 ## Features
 
@@ -28,10 +31,11 @@ Follow the instructions to install the extension. Click the extensions icon to r
 ### Currently supported sites
 
 * [YouTube](https://www.youtube.com/)
+* [Netflix](https://www.netflix.com/)
+* [Niconico](https://www.nicovideo.jp/)
 
 ### To-do sites
 
-* Netflix
 * Disney Plus
 * Amazon Prime Video
 
@@ -46,8 +50,7 @@ This extension is still in early development. So, bugs may arise.
 ### Known issues
 
 * YouTube shorts will likely cause issues with time-tracking.
-* Navigating away from a video before pausing will keep the timer going.
-* Having multiple videos play at once will likely conflict and cause issues with the tracker.
+* YouTube miniplayer is not supported yet.
 
 ###
 

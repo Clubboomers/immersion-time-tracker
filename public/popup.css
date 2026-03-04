@@ -45,9 +45,18 @@ h2 {
   margin-bottom: 10px;
 }
 
+h3 {
+  font-size: 14px;
+}
+
 #time {
   font-size: 3rem;
   color: #f24150;
+}
+
+#total-time {
+  font-size: 1.5rem;
+  color: #777777;
 }
 
 #activity h2 {
@@ -60,19 +69,19 @@ h2 {
   width: 100%;
 }
 
-ul {
-    background-color: #232220;
+#recent-activity {
+  background-color: #232220;
   height: 200px;
   width: 100%;
   overflow: auto;
 }
 
 ul:empty {
-    background-image: url("./lonely.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 200px;
+  background-image: url("./lonely.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  height: 200px;
 }
 
 img {
@@ -113,13 +122,16 @@ img {
 }
 
 .disable-animation {
-    animation: none;
+  animation: none;
 }
 
 .video-title.disable-animation::before {
-    animation: none;
-    content: attr(data-text, ""); /* set the content property to the default value */
-  }
+  animation: none;
+  content: attr(
+    data-text,
+    ""
+  ); /* set the content property to the default value */
+}
 
 /* for Chrome */
 @keyframes text-scroll {
@@ -131,7 +143,7 @@ img {
   }
 }
 
-li {
+#recent-activity li {
   list-style: none; /* remove the default list style */
   height: 50px; /* set the height of each li to 50px */
   width: 100%; /* set the width of each li to 100% */
@@ -143,11 +155,11 @@ li {
   justify-content: flex-start;
 }
 
-li:nth-child(even) {
+#recent-activity li:nth-child(even) {
   background-color: #292826;
 }
 
-li:nth-child(odd) {
+#recent-activity li:nth-child(odd) {
   background-color: #2f2e2b;
 }
 

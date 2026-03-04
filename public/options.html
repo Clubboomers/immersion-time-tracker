@@ -1,13 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel= stylesheet href="options.css">
-</head>
-<body>
-    <h1>Options</h1>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <hgroup>
+        <h1>Options</h1>
+        <h2>Change your tracking prefrences</h2>
+      </hgroup>
+      <form id="optionsForm">
+        <fieldset>
+          <legend>Preferred language</legend>
+          <label for="prefLangEnabled">
+            <div>
+              <input type="checkbox" role="switch" id="prefLangEnabled" />
+              Enable preferred language
+            </div>
+            <span
+              class="help-icon"
+              title="Setting a preferred language will limit tracking to videos in the target language."
+              >?</span
+            >
+          </label>
+          <label
+            class="hidden"
+            for="preferredLanguage"
+            id="preferredLanguageField"
+          >
+            <div>
+              Preferred language
+              <select name="preferredLanguage" id="preferredLanguage" required>
+                <option value="" selected>Select a language...</option>
+                <option value="af">Afrikaans</option>
+                <option value="sq">Albanian</option>
+                <option value="am">Amharic</option>
+                <option value="ar">Arabic</option>
+                <option value="hy">Armenian</option>
+                <option value="bn">Bangla</option>
+                <option value="eu">Basque</option>
+                <option value="bs">Bosnian</option>
+                <option value="bg">Bulgarian</option>
+                <option value="my">Burmese</option>
+                <option value="ca">Catalan</option>
+                <option value="ceb">Cebuano</option>
+                <option value="zh">Chinese</option>
+                <option value="co">Corsican</option>
+                <option value="hr">Croatian</option>
+                <option value="cs">Czech</option>
+                <option value="da">Danish</option>
+                <option value="nl">Dutch</option>
+                <option value="en">English</option>
+                <option value="eo">Esperanto</option>
+                <option value="et">Estonian</option>
+                <option value="fil">Filipino</option>
+                <option value="fi">Finnish</option>
+                <option value="fr">French</option>
+                <option value="gl">Galician</option>
+                <option value="ka">Georgian</option>
+                <option value="de">German</option>
+                <option value="el">Greek</option>
+                <option value="gu">Gujarati</option>
+                <option value="ht">Haitian Creole</option>
+                <option value="ha">Hausa</option>
+                <option value="haw">Hawaiian</option>
+                <option value="iw">Hebrew</option>
+                <option value="hi">Hindi</option>
+                <option value="hmn">Hmong</option>
+                <option value="hu">Hungarian</option>
+                <option value="is">Icelandic</option>
+                <option value="ig">Igbo</option>
+                <option value="id">Indonesian</option>
+                <option value="ga">Irish</option>
+                <option value="it">Italian</option>
+                <option value="ja">Japanese</option>
+                <option value="jv">Javanese</option>
+                <option value="kn">Kannada</option>
+                <option value="kk">Kazakh</option>
+                <option value="km">Khmer</option>
+                <option value="ko">Korean</option>
+                <option value="ku">Kurdish</option>
+                <option value="ky">Kyrgyz</option>
+                <option value="lo">Lao</option>
+                <option value="la">Latin</option>
+                <option value="lv">Latvian</option>
+                <option value="lt">Lithuanian</option>
+                <option value="lb">Luxembourgish</option>
+                <option value="mk">Macedonian</option>
+                <option value="mg">Malagasy</option>
+                <option value="ms">Malay</option>
+                <option value="ml">Malayalam</option>
+                <option value="mt">Maltese</option>
+                <option value="mi">Maori</option>
+                <option value="mr">Marathi</option>
+                <option value="mn">Mongolian</option>
+                <option value="ne">Nepali</option>
+                <option value="no">Norwegian</option>
+                <option value="ny">Nyanja</option>
+                <option value="ps">Pashto</option>
+                <option value="fa">Persian</option>
+                <option value="pl">Polish</option>
+                <option value="pt">Portuguese</option>
+                <option value="pa">Punjabi</option>
+                <option value="ro">Romanian</option>
+                <option value="ru">Russian</option>
+                <option value="sm">Samoan</option>
+                <option value="gd">Scottish Gaelic</option>
+                <option value="sr">Serbian</option>
+                <option value="sn">Shona</option>
+                <option value="sd">Sindhi</option>
+                <option value="si">Sinhala</option>
+                <option value="sk">Slovak</option>
+                <option value="sl">Slovenian</option>
+                <option value="so">Somali</option>
+                <option value="st">Southern Sotho</option>
+                <option value="es">Spanish</option>
+                <option value="su">Sundanese</option>
+                <option value="sw">Swahili</option>
+                <option value="sv">Swedish</option>
+                <option value="tg">Tajik</option>
+                <option value="ta">Tamil</option>
+                <option value="te">Telugu</option>
+                <option value="th">Thai</option>
+                <option value="tr">Turkish</option>
+                <option value="uk">Ukrainian</option>
+                <option value="ur">Urdu</option>
+                <option value="uz">Uzbek</option>
+                <option value="vi">Vietnamese</option>
+                <option value="cy">Welsh</option>
+                <option value="fy">Western Frisian</option>
+                <option value="xh">Xhosa</option>
+                <option value="yi">Yiddish</option>
+                <option value="yo">Yoruba</option>
+                <option value="zu">Zulu</option>
+              </select>
+            </div>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Automatic tracking</legend>
+          <!-- make group element for checkboxes below -->
+          <fieldset id="domainsToTrack">
+            <legend>Track on these websites:</legend>
+            <label for="youtube">
+              <div>
+                <input
+                  type="checkbox"
+                  id="youtube"
+                  name="youtube"
+                  value="www.youtube.com"
+                  enabled
+                />
+                YouTube
+              </div>
+            </label>
+            <label for="netflix">
+              <div>
+                <input
+                  type="checkbox"
+                  id="netflix"
+                  name="netflix"
+                  value="www.netflix.com"
+                  enabled
+                />
+                Netflix
+              </div>
+            </label>
+            <label for="nicovideo">
+              <div>
+                <input
+                  type="checkbox"
+                  id="nicovideo"
+                  name="nicovideo"
+                  value="www.nicovideo.jp"
+                  enabled
+                />
+                NicoVideo
+              </div>
+            </label>
+          </fieldset>
+          <!-- Field for custom domains -->
+          <fieldset class="list">
+            <legend>
+              Always track on these domains:
+              <span
+                class="help-icon"
+                title="Every video played on one of these domains will trigger the timer to start tracking regardless of automatic tracking and preferred language settings. Keep in mind to enter a url with the subdomain (e.g. maps.google.com)."
+                >?</span
+              >
+            </legend>
+            <div id="domainsToAlwaysTrack">
+              <div id="listHead">
+                <input
+                  type="text"
+                  class="listInput"
+                  placeholder="e.g. www.google.com"
+                />
+                <button type="button" class="button" id="addToList">Add</button>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="list">
+            <legend>
+              Exclude tracking with keywords:
+              <span
+                class="help-icon"
+                title="Videos with the following word(s) in their title will be exempt from tracking on supported websites."
+              >
+                ?</span
+              >
+            </legend>
+            <div id="blacklistedKeywords">
+              <div id="listHead">
+                <input type="text" class="listInput" placeholder="e.g. music" />
+                <button type="button" class="button" id="addToList">Add</button>
+              </div>
+            </div>
+          </fieldset>
+        </fieldset>
+        <button type="submit" class="contrast">Save</button>
+      </form>
+    </div>
+    <script src="options.js"></script>
+  </body>
 </html>

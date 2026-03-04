@@ -107,6 +107,7 @@ export class TimeTracker {
   }
 
   public getTotalTimeWatched(): number {
+    this.updateTotalTimeWatched();
     return this.totalTimeWatched;
   }
 
@@ -129,6 +130,7 @@ export class TimeTracker {
     }
     //videoEntry.getLastTimeEntry()?.setEndTime(endTime);
     videoEntry.setLastTimeEntryEndTime(endTime);
+    this.updateTotalTimeWatched();
   }
 
   public getVideoEntryByURL(url: string): VideoEntry | null {
@@ -157,6 +159,7 @@ export class TimeTracker {
     }
     this.videoEntries.push(videoEntry);
     this.lastVideoEntry = videoEntry;
+    this.updateTotalTimeWatched();
   }
 
   /**
@@ -178,6 +181,7 @@ export class TimeTracker {
     }
     this.videoEntries.push(new VideoEntry(url, title, [new TimeEntry(date)]));
     this.lastVideoEntry = this.videoEntries[this.videoEntries.length - 1];
+    this.updateTotalTimeWatched();
   }
 
   private videoEntryWithUrlExists(url: string): boolean {
@@ -189,13 +193,68 @@ export class TimeTracker {
     return false;
   }
 
+  private getAllDates(): { dateStart: Date; dateEnd: Date }[] {
+    const dates: { dateStart: Date; dateEnd: Date }[] = [];
+    this.videoEntries.forEach((videoEntry) => {
+      videoEntry.getTimeEntries().forEach((timeEntry) => {
+        dates.push({
+          dateStart: timeEntry.getStartTime(),
+          dateEnd: timeEntry.getEndTime() || new Date(),
+        });
+      });
+    });
+    return dates;
+  }
+
   public updateTotalTimeWatched(): void {
+    console.log("updateTotalTimeWatched called");
     this.totalTimeWatched = 0;
-    this.timeEntries.forEach((timeEntry) => {
-      if (timeEntry.getEndTime()) {
-        this.totalTimeWatched += timeEntry.getDuration();
+    let dates: { dateStart: Date; dateEnd: Date }[] = this.getAllDates();
+    // sort times
+    dates = dates.sort((a, b) => a.dateStart.getTime() - b.dateStart.getTime());
+    // merge overlapping times
+    for (let i = 0; i < dates.length - 1; i++) {
+      if (dates[i].dateEnd.getTime() > dates[i + 1].dateStart.getTime()) {
+        dates[i].dateEnd = dates[i + 1].dateEnd;
+        dates.splice(i + 1, 1);
+        i--;
+      }
+    }
+    // calculate total time
+    dates.forEach((date) => {
+      this.totalTimeWatched += date.dateEnd.getTime() - date.dateStart.getTime();
+    });
+
+    this.totalTimeWatched = Math.round(this.totalTimeWatched / 1000);
+  }
+
+  /**
+   * Returns the time watched in the last period
+   * Sorts dates and merges overlapping times so that
+   * overlapping times are not counted twice
+   * @param period in seconds
+   */
+  public getTimeWatchedByPeriod(period: number): number {
+    let dates: { dateStart: Date; dateEnd: Date }[] = this.getAllDates();
+    // sort times
+    dates = dates.sort((a, b) => a.dateStart.getTime() - b.dateStart.getTime());
+    // merge overlapping times
+    for (let i = 0; i < dates.length - 1; i++) {
+      if (dates[i].dateEnd.getTime() > dates[i + 1].dateStart.getTime()) {
+        dates[i].dateEnd = dates[i + 1].dateEnd;
+        dates.splice(i + 1, 1);
+        i--;
+      }
+    }
+    // calculate total time
+    let timeWatched = 0;
+    dates.forEach((date) => {
+      const time = date.dateEnd.getTime() - date.dateStart.getTime();
+      if (time < period * 1000) {
+        timeWatched += time;
       }
     });
+    return Math.round(timeWatched / 1000);
   }
 
   public getVideoEntryByUrl(url: string): VideoEntry | null {
@@ -253,17 +312,5 @@ export class TimeTracker {
       }
     }
     return videoEntriesInRange;
-  }
-
-  public static fromJson(json: string): TimeTracker {
-    const timeTracker: TimeTracker = plainToInstance(
-      TimeTracker,
-      JSON.parse(json)
-    )[0];
-    return timeTracker;
-  }
-
-  public static toJson(timeTracker: TimeTracker): string {
-    return JSON.stringify(instanceToPlain(timeTracker));
   }
 }
