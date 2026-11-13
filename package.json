@@ -22,5 +22,15 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "reflect-metadata": "^0.1.13"
+  },
+  "overrides": {
+    "browserslist": "4.28.7",
+    "cross-spawn": "7.0.6",
+    "picomatch": "2.3.2",
+    "semver": "7.8.6",
+    "serialize-javascript": "6.0.2",
+    "webpack": {
+      "ajv": "6.15.0"
+    }
   }
 }
