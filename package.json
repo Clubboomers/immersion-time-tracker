@@ -10,6 +10,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "overrides": {
+    "picomatch": "2.3.2"
+  },
   "devDependencies": {
     "@types/chrome": "^0.0.235",
     "@types/node": "^20.1.0",
